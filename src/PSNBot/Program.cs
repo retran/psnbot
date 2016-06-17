@@ -5,62 +5,48 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using PsnLib.Entities;
+using System.Net;
 
 namespace PSNBot
 {
-    class Program
+    public class Program
     {
+        //-1001017895589
+        // "ps4_rus"
+        //
+
         static async void Do()
         {
-            var authManager = new AuthenticationManager();
-            var userAccountEntity = await authManager.Authenticate("", "");
+            var client = new PSNClient();
+            client.Login("", "");
+            var achievements = await client.GetAchievements();
 
-            var user = await authManager.GetUserEntity(userAccountEntity);
+            var telegramClient = new Telegram.TelegramClient("");
 
-            var manager = new PsnLib.Managers.RecentActivityManager();
+            //var updates = telegramClient.GetUpdates(new Telegram.GetUpdatesQuery());
 
 
-            //PsnLib.Managers.
-            var activity = await manager.GetActivityFeed("RetranDeLarten", 0, false, true, userAccountEntity);
-
-            foreach (var entry in activity.feed)
+            foreach (var ach in achievements)
             {
-                if (entry.CondensedStories != null && entry.CondensedStories.Any())
-                { 
-                    foreach (var story in entry.CondensedStories)
-                    {
-                        Console.WriteLine();
-                        Console.WriteLine(story.Date);
-                        Console.WriteLine(story.Caption);
-                        Console.WriteLine(GetAchievmentLine(story.Targets));
-                    }
-                }
-                else
+                if (!string.IsNullOrEmpty(ach.Image))
                 {
-                    Console.WriteLine();
-                    Console.WriteLine(entry.Date);
-                    Console.WriteLine(entry.Caption);
-                    Console.WriteLine(GetAchievmentLine(entry.Targets));
+                    WebClient myWebClient = new WebClient();
+                    var image = myWebClient.DownloadData(ach.Image);
+
+                    var message = await telegramClient.SendPhoto(new Telegram.SendPhotoQuery()
+                    {
+                        ChatId = -120625429
+                    }, image);
                 }
-            }
-        }
 
-        private static string GetAchievmentLine(List<RecentActivityEntity.Target> targets)
-        {
-            var name = targets.FirstOrDefault(t => t.Type == "TROPHY_NAME");
-            var detail = targets.FirstOrDefault(t => t.Type == "TROPHY_DETAIL");
-            var url = targets.FirstOrDefault(t => t.Type == "TROPHY_IMAGE_URL");
-
-            var sb = new StringBuilder();
-            if (name != null)
-            {
-                sb.Append(name.Meta);
-                sb.Append("\n");
-                sb.Append(detail.Meta);
-                sb.Append("\n");
-                sb.Append(url.Meta);
+                await telegramClient.SendMessage(new Telegram.SendMessageQuery()
+                {
+                    // ChatId = -1001017895589,
+                    ChatId = -120625429,
+                    Text = ach.GetTelegramMessage(),
+                    ParseMode = "HTML",                    
+                });
             }
-            return sb.ToString();
         }
 
         static void Main(string[] args)

@@ -42,6 +42,10 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>packages\Microsoft.AspNet.WebApi.Client.5.2.2\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -50,8 +54,35 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AchievementEntry.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PSNClient.cs" />
+    <Compile Include="Telegram\Audio.cs" />
+    <Compile Include="Telegram\CallbackQuery.cs" />
+    <Compile Include="Telegram\Chat.cs" />
+    <Compile Include="Telegram\ChosenInlineResult.cs" />
+    <Compile Include="Telegram\Contact.cs" />
+    <Compile Include="Telegram\Document.cs" />
+    <Compile Include="Telegram\GetUpdatesQuery.cs" />
+    <Compile Include="Telegram\InlineQuery.cs" />
+    <Compile Include="Telegram\InlineQueryResult.cs" />
+    <Compile Include="Telegram\KeyboardButton.cs" />
+    <Compile Include="Telegram\Location.cs" />
+    <Compile Include="Telegram\Message.cs" />
+    <Compile Include="Telegram\MessageEntity.cs" />
+    <Compile Include="Telegram\PhotoSize.cs" />
+    <Compile Include="Telegram\ReplyKeyboardMarkup.cs" />
+    <Compile Include="Telegram\ReplyMarkup.cs" />
+    <Compile Include="Telegram\SendMessageQuery.cs" />
+    <Compile Include="Telegram\Sticker.cs" />
+    <Compile Include="Telegram\TelegramClient.cs" />
+    <Compile Include="Telegram\TelegramResponse.cs" />
+    <Compile Include="Telegram\Update.cs" />
+    <Compile Include="Telegram\User.cs" />
+    <Compile Include="Telegram\Venue.cs" />
+    <Compile Include="Telegram\Video.cs" />
+    <Compile Include="Telegram\Voice.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
