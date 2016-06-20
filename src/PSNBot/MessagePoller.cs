@@ -346,6 +346,43 @@ namespace PSNBot
                     });
                 }
             }
+
+            if (message.Text.StartsWith("/top@clankbot", StringComparison.OrdinalIgnoreCase))
+            {
+                var accs = _accounts.GetAll();
+                var table = accs.Select(a =>
+                {
+                    var user = _psnClient.GetUser(a.PSNName);
+                    if (user == null)
+                    {
+                        return null;
+                    }
+
+                    return new
+                    {
+                        TelegramName = a.TelegramName,
+                        PSNName = a.PSNName,
+                        Rating = _psnClient.GetRating(user),
+                        ThrophyLine = _psnClient.GetTrophyLine(user)
+                    };
+                }).Where(t => t != null).OrderByDescending(t => t.Rating).Take(20);
+
+                StringBuilder sb = new StringBuilder();
+                int i = 1;
+                foreach (var t in table)
+                {
+                    sb.AppendLine(string.Format("{0}. {1} ({2}) {3}", i, t.PSNName, t.TelegramName, t.ThrophyLine));
+                    i++;
+                }
+
+                _client.SendMessage(new SendMessageQuery()
+                {
+                    ChatId = message.Chat.Id,
+                    ReplyToMessageId = message.MessageId,
+                    Text = sb.ToString(),
+                    ParseMode = "HTML",
+                });
+            }
         }
 
         public void Start()

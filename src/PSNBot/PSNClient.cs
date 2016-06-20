@@ -43,6 +43,33 @@ namespace PSNBot
             _userAccountEntity = task.Result;
         }
 
+        public UserEntity GetUser(string psnName)
+        {
+            try
+            {
+                var user = _userManager.GetUser(psnName, _userAccountEntity);
+                user.Wait();
+                return user.Result;
+            }
+            catch { }
+            return null;
+        }
+
+        public long GetRating(UserEntity.TrophySummary throphies)
+        {
+            return throphies.EarnedTrophies.Platinum * 500 + throphies.EarnedTrophies.Gold * 100 + throphies.EarnedTrophies.Silver * 50 + throphies.EarnedTrophies.Bronze * 10;
+        }
+
+        public long GetRating(UserEntity user)
+        {
+            var throphies = user.trophySummary;
+            if (throphies != null)
+            {
+                return GetRating(throphies);
+            }
+            return 0;
+        }
+
         public string GetStatus(string psnName)
         {
             try
@@ -64,6 +91,16 @@ namespace PSNBot
                         status += "\nLast seen: " + DateTime.Parse(presence.PrimaryInfo.LastOnlineDate, CultureInfo.InvariantCulture).ToString(CultureInfo.GetCultureInfo("ru-RU"));
                     }
 
+                    if (user.Result.trophySummary != null)
+                    {
+                        var trophies = user.Result.trophySummary;
+                        status += string.Format("\n\nBronze: {0}\n", trophies.EarnedTrophies.Bronze);
+                        status += string.Format("Silver: {0}\n", trophies.EarnedTrophies.Silver);
+                        status += string.Format("Gold: {0}\n", trophies.EarnedTrophies.Gold);
+                        status += string.Format("Platinum: {0}\n", trophies.EarnedTrophies.Platinum);
+                        status += string.Format("\n<b>Rating: {0}</b>\n", GetRating(trophies));
+                    }
+
                     return status;
                 }
             }
@@ -75,7 +112,7 @@ namespace PSNBot
         {
             var result = new List<ImageMessage>();
 
-            var messageGroup = _messageManager.GetMessageGroup(_userAccountEntity.Entity.OnlineId, _userAccountEntity);            
+            var messageGroup = _messageManager.GetMessageGroup(_userAccountEntity.Entity.OnlineId, _userAccountEntity);
             messageGroup.Wait();
 
 
@@ -151,7 +188,7 @@ namespace PSNBot
                             achievementEntry.TimeStamp = story.Date.ToUniversalTime();
                             achievementEntry.Event = story.Caption;
                             achievementEntry.Source = story.Source.Meta;
-                            
+
                             targets = story.Targets;
 
                             var name = targets.FirstOrDefault(t => t.Type == "TROPHY_NAME");
@@ -211,5 +248,14 @@ namespace PSNBot
             }
         }
 
+        internal string GetTrophyLine(UserEntity user)
+        { 
+            var throphies = user.trophySummary;
+            if (throphies != null)
+            {
+                return string.Format("[P {0}] [G {1}] [S {2}] [B {0}]", throphies.EarnedTrophies.Platinum, throphies.EarnedTrophies.Gold, throphies.EarnedTrophies.Silver, throphies.EarnedTrophies.Bronze);
+            }
+            return string.Empty;
+        }
     }
 }
