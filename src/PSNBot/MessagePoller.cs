@@ -316,7 +316,7 @@ namespace PSNBot
                         var status = _psnClient.GetStatus(account.PSNName);
                         if (!string.IsNullOrEmpty(status))
                         {
-                            sb.AppendLine(string.Format("Status: {0}", status));
+                            sb.AppendLine(string.Format("{0}", status));
                         }
                     }
 

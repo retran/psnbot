@@ -53,10 +53,15 @@ namespace PSNBot
                 if (user.Result != null && user.Result.presence != null)
                 {
                     var presence = user.Result.presence;
-                    var status = presence.PrimaryInfo.OnlineStatus;
+                    var status = "Status: " + presence.PrimaryInfo.OnlineStatus;
                     if (presence.PrimaryInfo.GameTitleInfo != null)
                     {
                         status += " (" + presence.PrimaryInfo.GameTitleInfo.TitleName + " - " + presence.PrimaryInfo.GameStatus + ")";
+                    }
+
+                    if (presence.PrimaryInfo.LastOnlineDate != null)
+                    {
+                        status += "\nLast seen: " + DateTime.Parse(presence.PrimaryInfo.LastOnlineDate, CultureInfo.InvariantCulture).ToString(CultureInfo.GetCultureInfo("ru-RU"));
                     }
 
                     return status;
