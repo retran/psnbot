@@ -175,11 +175,11 @@ namespace PSNBot
                 var splitted = message.Text.Split(' ');
                 if (splitted.Length > 1)
                 {
-                    if (_accounts.GetById(message.From.Id) == null)
+                    if (_accounts.GetById(message.From.Id) == null && _accounts.GetByPSN(splitted[1].Trim()) == null)
                     {
-                        if (_psnClient.SendFriendRequest(splitted[1]))
+                        if (_psnClient.SendFriendRequest(splitted[1].Trim()))
                         {
-                            _accounts.Register(message.From.Id, message.From.Username, splitted[1]);
+                            _accounts.Register(message.From.Id, message.From.Username, splitted[1].Trim());
                             _client.SendMessage(new SendMessageQuery()
                             {
                                 ChatId = message.Chat.Id,
@@ -199,12 +199,24 @@ namespace PSNBot
                     }
                     else
                     {
-                        _client.SendMessage(new SendMessageQuery()
+                        if (message.From.Id == 44941651)
                         {
-                            ChatId = message.Chat.Id,
-                            ReplyToMessageId = message.MessageId,
-                            Text = "Я тебя уже добавил."
-                        });
+                            _client.SendMessage(new SendMessageQuery()
+                            {
+                                ChatId = message.Chat.Id,
+                                ReplyToMessageId = message.MessageId,
+                                Text = "Пагром, ты пидор."
+                            });
+                        }
+                        else
+                        {
+                            _client.SendMessage(new SendMessageQuery()
+                            {
+                                ChatId = message.Chat.Id,
+                                ReplyToMessageId = message.MessageId,
+                                Text = "Я тебя уже добавил."
+                            });
+                        }
                     }
                 }
                 else
@@ -240,7 +252,7 @@ namespace PSNBot
                     });
                 }
             }
-            
+
             if (message.Text.StartsWith("/setinterests@clankbot", StringComparison.OrdinalIgnoreCase))
             {
                 if (_accounts.GetById(message.From.Id) != null)
@@ -292,12 +304,22 @@ namespace PSNBot
             {
                 var interests = message.Text.Remove(0, "/list@clankbot".Length).Trim();
                 StringBuilder sb = new StringBuilder();
-                foreach (var account in _accounts.GetAll().Where(a => string.IsNullOrEmpty(interests) 
+                foreach (var account in _accounts.GetAll().Where(a => string.IsNullOrEmpty(interests)
                     || (!string.IsNullOrEmpty(a.Interests) && a.Interests.ToLower().Contains(interests.ToLower()))
                     || (!string.IsNullOrEmpty(a.TelegramName) && a.TelegramName.ToLower().Contains(interests.ToLower()))
                     || (!string.IsNullOrEmpty(a.PSNName) && a.PSNName.ToLower().Contains(interests.ToLower()))))
                 {
                     sb.AppendLine(string.Format("Telegram: <b>{0}</b>\nPSN: <b>{1}</b>", account.TelegramName, account.PSNName));
+
+                    //if (!string.IsNullOrEmpty(interests))
+                    {
+                        var status = _psnClient.GetStatus(account.PSNName);
+                        if (!string.IsNullOrEmpty(status))
+                        {
+                            sb.AppendLine(string.Format("Status: {0}", status));
+                        }
+                    }
+
                     if (!string.IsNullOrEmpty(account.Interests))
                     {
                         sb.AppendLine(string.Format("{0}", account.Interests));
@@ -308,7 +330,7 @@ namespace PSNBot
                 {
                     _client.SendMessage(new SendMessageQuery()
                     {
-                        ChatId = message.From.Id,                        
+                        ChatId = message.From.Id,
                         Text = sb.ToString(),
                         ParseMode = "HTML",
                     });

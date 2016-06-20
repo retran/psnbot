@@ -25,6 +25,7 @@ namespace PSNBot
         private RecentActivityManager _recentActivityManager;
         private UserAccountEntity _userAccountEntity;
         private MessageManager _messageManager;
+        private UserManager _userManager;
 
         public PSNClient()
         {
@@ -32,6 +33,7 @@ namespace PSNBot
             _recentActivityManager = new RecentActivityManager();
             _friendManager = new FriendManager();
             _messageManager = new MessageManager();
+            _userManager = new UserManager();
         }
 
         public void Login(string username, string password)
@@ -39,6 +41,29 @@ namespace PSNBot
             var task = _authManager.Authenticate(username, password);
             task.Wait();
             _userAccountEntity = task.Result;
+        }
+
+        public string GetStatus(string psnName)
+        {
+            try
+            {
+                var user = _userManager.GetUser(psnName, _userAccountEntity);
+                user.Wait();
+
+                if (user.Result != null && user.Result.presence != null)
+                {
+                    var presence = user.Result.presence;
+                    var status = presence.PrimaryInfo.OnlineStatus;
+                    if (presence.PrimaryInfo.GameTitleInfo != null)
+                    {
+                        status += " (" + presence.PrimaryInfo.GameTitleInfo.TitleName + " - " + presence.PrimaryInfo.GameStatus + ")";
+                    }
+
+                    return status;
+                }
+            }
+            catch { }
+            return null;
         }
 
         public IEnumerable<ImageMessage> GetMessages(DateTime timestamp)
@@ -70,9 +95,8 @@ namespace PSNBot
                             Source = msg.senderOnlineId,
                             TimeStamp = date
                         });
-
-                        Thread.Sleep(300);
                     }
+                    Thread.Sleep(100);
                 }
             }
             return result;
@@ -98,7 +122,7 @@ namespace PSNBot
                     achievements.AddRange(GetAchievementsImpl(activity.feed, account));
                 }
 
-                Thread.Sleep(300);
+                Thread.Sleep(100);
             }
 
             return achievements.OrderBy(a => a.TimeStamp);

@@ -71,7 +71,7 @@ namespace PSNBot
 
         public Account GetByPSN(string name)
         {
-            return _accounts.FirstOrDefault(a => string.Equals(a.PSNName, name, StringComparison.OrdinalIgnoreCase));
+            return _accounts.FirstOrDefault(a => string.Equals(a.PSNName.ToLower(), name.ToLower(), StringComparison.OrdinalIgnoreCase));
         }
 
         public IEnumerable<Account> GetAllActive()
