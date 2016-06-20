@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using PsnLib.Managers;
 using PsnLib.Entities;
+using System.Threading;
 
 namespace PSNBot
 {
@@ -24,15 +25,35 @@ namespace PSNBot
 
         public void Login(string username, string password)
         {
-            var task = _authManager.Authenticate("a.vasilyev@corvusalba.ru", "a1C23k8U");
+            var task = _authManager.Authenticate(username, password);
             task.Wait();
             _userAccountEntity = task.Result;
         }
 
-        public async Task<IEnumerable<AchievementEntry>> GetAchievements()
+        public bool SendFriendRequest(string name)
         {
-            var activity = await _recentActivityManager.GetActivityFeed("RetranDeLarten", 0, false, true, _userAccountEntity);
-            return GetAchievementsImpl(activity.feed);
+            var task = _friendManager.SendFriendRequest(name, "Привет! Это Кланк из чата PS4RUS!", _userAccountEntity);
+            task.Wait();
+            return task.Result;
+        }
+
+        public async Task<IEnumerable<AchievementEntry>> GetAchievements(IEnumerable<string> usernames)
+        {
+            var achievements = new List<AchievementEntry>();
+
+            foreach (var name in usernames)
+            {
+                var activity = await _recentActivityManager.GetActivityFeed(name, 0, false, false, _userAccountEntity);
+
+                if (activity != null)
+                {
+                    achievements.AddRange(GetAchievementsImpl(activity.feed));
+                }
+
+                Thread.Sleep(100);
+            }
+
+            return achievements.OrderBy(a => a.TimeStamp);
         }
 
         private static IEnumerable<AchievementEntry> GetAchievementsImpl(List<RecentActivityEntity.Feed> feed)
