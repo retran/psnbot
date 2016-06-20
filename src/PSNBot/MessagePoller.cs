@@ -30,101 +30,139 @@ namespace PSNBot
 
         private async Task Poll()
         {
-            var updates = await _client.GetUpdates(new GetUpdatesQuery()
+            try
             {
-                Offset = _offset
-            });
-
-            if (updates.Result.Any())
-            {
-                _offset = updates.Result.Last().UpdateId + 1;
-            }
-
-            foreach (var update in updates.Result)
-            {
-                if (update.Message != null && !string.IsNullOrEmpty(update.Message.Text))
+                var updates = await _client.GetUpdates(new GetUpdatesQuery()
                 {
-                    Trace.WriteLine(string.Format("{0}\t{1}\t{2}", DateTime.Now, update.Message.From.Username, update.Message.Text));
-                    Handle(update.Message);
+                    Offset = _offset
+                });
+
+                if (updates.Result.Any())
+                {
+                    _offset = updates.Result.Last().UpdateId + 1;
                 }
-            }
-            
 
-            var dt = DateTime.Now;
-            if ((dt - _lastCheckDateTime).TotalSeconds > 60)
-            {
-                DateTime lastTimeStamp = LoadTimeStamp();
-
-                _lastCheckDateTime = dt;
-                var achievements = await _psnClient.GetAchievements(_accounts.GetAllActive());
-
-                foreach (var ach in achievements.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
+                foreach (var update in updates.Result)
                 {
-                    lastTimeStamp = ach.TimeStamp;
-
-                    var account = _accounts.GetByPSN(ach.Source);
-                    if (account == null)
+                    if (update.Message != null && !string.IsNullOrEmpty(update.Message.Text))
                     {
-                        continue;
+                        Trace.WriteLine(string.Format("{0}\t{1}\t{2}", DateTime.Now, update.Message.From.Username, update.Message.Text));
+                        Handle(update.Message);
                     }
+                }
 
-                    if (!account.Chats.Any())
+                var dt = DateTime.Now;
+                if ((dt - _lastCheckDateTime).TotalSeconds > 60)
+                {
+                    DateTime lastPhotoTimeStamp = LoadTimeStamp(".phototimestamp");
+
+                    var msgs = _psnClient.GetMessages(lastPhotoTimeStamp).OrderBy(m => m.TimeStamp);
+                    foreach (var msg in msgs)
                     {
-                        continue;
-                    }
+                        var account = _accounts.GetByPSN(msg.Source);
 
-                    byte[] image = null;
-
-                    if (!string.IsNullOrEmpty(ach.Image))
-                    {
-                        WebClient myWebClient = new WebClient();
-                        image = myWebClient.DownloadData(ach.Image);
-                    }
-
-                    foreach (var id in account.Chats)
-                    {
-                        if (!string.IsNullOrEmpty(ach.Image))
+                        foreach (var id in account.Chats)
                         {
+                            var tlgMsg = await _client.SendMessage(new Telegram.SendMessageQuery()
+                            {
+                                ChatId = id,
+                                Text = string.Format("Пользователь <b>{0}</b> опубликовал изображение:", msg.Source),
+                                ParseMode = "HTML",
+                            });
+
                             var message = await _client.SendPhoto(new Telegram.SendPhotoQuery()
                             {
                                 ChatId = id
-                            }, image);
+                            }, msg.Data);
+
+                            Thread.Sleep(1000);
                         }
 
-                        var msg = await _client.SendMessage(new Telegram.SendMessageQuery()
-                        {
-                            ChatId = id,
-                            Text = ach.GetTelegramMessage(),
-                            ParseMode = "HTML",
-                        });
+                        lastPhotoTimeStamp = msg.TimeStamp;
+
                         Thread.Sleep(1000);
                     }
+
+                    SaveTimeStamp(lastPhotoTimeStamp, ".phototimestamp");
+
+
+                    DateTime lastTimeStamp = LoadTimeStamp(".timestamp");
+
+                    _lastCheckDateTime = dt;
+                    var achievements = await _psnClient.GetAchievements(_accounts.GetAllActive());
+
+                    foreach (var ach in achievements.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
+                    {
+                        lastTimeStamp = ach.TimeStamp;
+
+                        var account = _accounts.GetByPSN(ach.Source);
+                        if (account == null)
+                        {
+                            continue;
+                        }
+
+                        if (!account.Chats.Any())
+                        {
+                            continue;
+                        }
+
+                        byte[] image = null;
+
+                        if (!string.IsNullOrEmpty(ach.Image))
+                        {
+                            WebClient myWebClient = new WebClient();
+                            image = myWebClient.DownloadData(ach.Image);
+                        }
+
+                        foreach (var id in account.Chats)
+                        {
+                            if (!string.IsNullOrEmpty(ach.Image))
+                            {
+                                var message = await _client.SendPhoto(new Telegram.SendPhotoQuery()
+                                {
+                                    ChatId = id
+                                }, image);
+                            }
+
+                            var msg = await _client.SendMessage(new Telegram.SendMessageQuery()
+                            {
+                                ChatId = id,
+                                Text = ach.GetTelegramMessage(),
+                                ParseMode = "HTML",
+                            });
+                            Thread.Sleep(1000);
+                        }
+                    }
+                    SaveTimeStamp(lastTimeStamp, ".timestamp");
                 }
-                SaveTimeStamp(lastTimeStamp);
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
             }
         }
 
-        private void SaveTimeStamp(DateTime stamp)
+        private void SaveTimeStamp(DateTime stamp, string filename)
         {
-            using (var sw = new StreamWriter(".timestamp"))
+            using (var sw = new StreamWriter(filename))
             {
                 sw.Write(stamp.ToString(CultureInfo.InvariantCulture));
                 sw.Flush();
             }
         }
 
-        private DateTime LoadTimeStamp()
+        private DateTime LoadTimeStamp(string filename)
         {
-            if (File.Exists(".timestamp"))
+            if (File.Exists(filename))
             {
-                using (var sr = new StreamReader(".timestamp"))
+                using (var sr = new StreamReader(filename))
                 {
                     var line = sr.ReadLine();
                     return DateTime.Parse(line, CultureInfo.InvariantCulture);
                 }
             }
 
-            return DateTime.Now;
+            return DateTime.UtcNow;
         }
 
         private void Handle(Message message)
