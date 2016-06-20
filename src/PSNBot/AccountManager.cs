@@ -13,6 +13,7 @@ namespace PSNBot
         public string TelegramName { get; set; }
         public string PSNName { get; set; }
         public HashSet<long> Chats { get; set; }
+        public string Interests { get; set; }
 
         public Account()
         {
@@ -49,6 +50,13 @@ namespace PSNBot
             Persist();
         }
 
+        public void SetInterests(long telegramId, string interests)
+        {
+            var account = _accounts.First(a => a.TelegramId == telegramId);
+            account.Interests = interests;
+            Persist();
+        }
+
         public void Stop(long telegramId, long chatId)
         {
             var account = _accounts.First(a => a.TelegramId == telegramId);
@@ -66,9 +74,14 @@ namespace PSNBot
             return _accounts.FirstOrDefault(a => string.Equals(a.PSNName, name, StringComparison.OrdinalIgnoreCase));
         }
 
-        internal IEnumerable<string> GetAllActivePSNNames()
+        public IEnumerable<Account> GetAllActive()
         {
-            return _accounts.Where(a => a.Chats != null && a.Chats.Any()).Select(a => a.PSNName);
+            return _accounts.Where(a => a.Chats != null && a.Chats.Any());
+        }
+
+        public IEnumerable<Account> GetAll()
+        {
+            return _accounts;
         }
 
         private void Load()
@@ -85,16 +98,37 @@ namespace PSNBot
                         account.TelegramId = long.Parse(splitted[0]);
                         account.TelegramName = splitted[1];
                         account.PSNName = splitted[2];
-                        account.Chats = splitted.Length > 3 && !string.IsNullOrEmpty(splitted[3]) 
+                        account.Chats = splitted.Length > 3 && !string.IsNullOrEmpty(splitted[3])
                             ? new HashSet<long>(splitted[3].Split(',').Select(v => long.Parse(v)))
                             : new HashSet<long>();
                         _accounts.Add(account);
                     }
                 }
             }
+
+            if (File.Exists(".interests"))
+            {
+                using (var sr = new StreamReader(".interests"))
+                {
+                    while (!sr.EndOfStream)
+                    {
+                        var line = sr.ReadLine();
+                        if (!string.IsNullOrEmpty(line))
+                        {
+                            var splitted = line.Split((char)0);
+                            var id = long.Parse(splitted[0]);
+                            var account = _accounts.FirstOrDefault(a => a.TelegramId == id);
+                            if (account != null && splitted.Length > 1)
+                            {
+                                account.Interests = splitted[1];
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        private void Persist()
+        public void Persist()
         {
             using (var sw = new StreamWriter(".accounts"))
             {
@@ -104,6 +138,16 @@ namespace PSNBot
                 }
                 sw.Flush();
             }
+
+            using (var sw = new StreamWriter(".interests"))
+            {
+                foreach (var account in _accounts)
+                {
+                    sw.WriteLine(account.TelegramId.ToString() + (char)0 + account.Interests);
+                }
+                sw.Flush();
+            }
         }
+
     }
 }

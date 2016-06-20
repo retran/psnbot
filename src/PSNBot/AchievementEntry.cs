@@ -14,12 +14,14 @@ namespace PSNBot
         public string Name { get; set; }
         public string Detail { get; set; }
         public string Image { get; set; }
+        public Account Account { get; set; }
 
         public string GetTelegramMessage()
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("👻");
             sb.Append(Event);
+            sb.Append(string.Format(" ({0})", Account.TelegramName));
             if (!string.IsNullOrEmpty(Name))
             {
                 sb.Append("\n\n");

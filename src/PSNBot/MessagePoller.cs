@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using PSNBot.Telegram;
 using System.Net;
 using System.IO;
+using System.Globalization;
+using System.Text;
 
 namespace PSNBot
 {
@@ -54,7 +56,7 @@ namespace PSNBot
                 DateTime lastTimeStamp = LoadTimeStamp();
 
                 _lastCheckDateTime = dt;
-                var achievements = await _psnClient.GetAchievements(_accounts.GetAllActivePSNNames());
+                var achievements = await _psnClient.GetAchievements(_accounts.GetAllActive());
 
                 foreach (var ach in achievements.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
                 {
@@ -106,7 +108,7 @@ namespace PSNBot
         {
             using (var sw = new StreamWriter(".timestamp"))
             {
-                sw.Write(stamp.ToString());
+                sw.Write(stamp.ToString(CultureInfo.InvariantCulture));
                 sw.Flush();
             }
         }
@@ -118,7 +120,7 @@ namespace PSNBot
                 using (var sr = new StreamReader(".timestamp"))
                 {
                     var line = sr.ReadLine();
-                    return DateTime.Parse(line);
+                    return DateTime.Parse(line, CultureInfo.InvariantCulture);
                 }
             }
 
@@ -127,6 +129,13 @@ namespace PSNBot
 
         private void Handle(Message message)
         {
+            var acc = _accounts.GetById(message.From.Id);
+            if (acc != null && acc.TelegramName != message.From.Username)
+            {
+                acc.TelegramName = message.From.Username;
+                _accounts.Persist();
+            }
+
             if (message.Text.StartsWith("/register@clankbot", StringComparison.OrdinalIgnoreCase))
             {
                 var splitted = message.Text.Split(' ');
@@ -197,6 +206,30 @@ namespace PSNBot
                     });
                 }
             }
+            
+            if (message.Text.StartsWith("/setinterests@clankbot", StringComparison.OrdinalIgnoreCase))
+            {
+                if (_accounts.GetById(message.From.Id) != null)
+                {
+                    var interests = message.Text.Remove(0, "/setinterests@clankbot".Length).Trim();
+                    _accounts.SetInterests(message.From.Id, interests);
+                    _client.SendMessage(new SendMessageQuery()
+                    {
+                        ChatId = message.Chat.Id,
+                        ReplyToMessageId = message.MessageId,
+                        Text = "Интересы сохранены."
+                    });
+                }
+                else
+                {
+                    _client.SendMessage(new SendMessageQuery()
+                    {
+                        ChatId = message.Chat.Id,
+                        ReplyToMessageId = message.MessageId,
+                        Text = "Сначала зарегистрируйся."
+                    });
+                }
+            }
 
             if (message.Text.StartsWith("/stop@clankbot", StringComparison.OrdinalIgnoreCase))
             {
@@ -217,6 +250,43 @@ namespace PSNBot
                         ChatId = message.Chat.Id,
                         ReplyToMessageId = message.MessageId,
                         Text = "Сначала зарегистрируйся."
+                    });
+                }
+            }
+
+            if (message.Text.StartsWith("/list@clankbot", StringComparison.OrdinalIgnoreCase))
+            {
+                var interests = message.Text.Remove(0, "/list@clankbot".Length).Trim();
+                StringBuilder sb = new StringBuilder();
+                foreach (var account in _accounts.GetAll().Where(a => string.IsNullOrEmpty(interests) 
+                    || (!string.IsNullOrEmpty(a.Interests) && a.Interests.ToLower().Contains(interests.ToLower()))
+                    || (!string.IsNullOrEmpty(a.TelegramName) && a.TelegramName.ToLower().Contains(interests.ToLower()))
+                    || (!string.IsNullOrEmpty(a.PSNName) && a.PSNName.ToLower().Contains(interests.ToLower()))))
+                {
+                    sb.AppendLine(string.Format("Telegram: <b>{0}</b>\nPSN: <b>{1}</b>", account.TelegramName, account.PSNName));
+                    if (!string.IsNullOrEmpty(account.Interests))
+                    {
+                        sb.AppendLine(string.Format("{0}", account.Interests));
+                    }
+                    sb.AppendLine();
+                }
+                if (string.IsNullOrEmpty(interests))
+                {
+                    _client.SendMessage(new SendMessageQuery()
+                    {
+                        ChatId = message.From.Id,                        
+                        Text = sb.ToString(),
+                        ParseMode = "HTML",
+                    });
+                }
+                else
+                {
+                    _client.SendMessage(new SendMessageQuery()
+                    {
+                        ChatId = message.Chat.Id,
+                        ReplyToMessageId = message.MessageId,
+                        Text = sb.ToString(),
+                        ParseMode = "HTML",
                     });
                 }
             }

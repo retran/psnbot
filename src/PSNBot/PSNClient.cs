@@ -37,17 +37,17 @@ namespace PSNBot
             return task.Result;
         }
 
-        public async Task<IEnumerable<AchievementEntry>> GetAchievements(IEnumerable<string> usernames)
+        public async Task<IEnumerable<AchievementEntry>> GetAchievements(IEnumerable<Account> accounts)
         {
             var achievements = new List<AchievementEntry>();
 
-            foreach (var name in usernames)
+            foreach (var account in accounts)
             {
-                var activity = await _recentActivityManager.GetActivityFeed(name, 0, false, false, _userAccountEntity);
+                var activity = await _recentActivityManager.GetActivityFeed(account.PSNName, 0, false, false, _userAccountEntity);
 
                 if (activity != null)
                 {
-                    achievements.AddRange(GetAchievementsImpl(activity.feed));
+                    achievements.AddRange(GetAchievementsImpl(activity.feed, account));
                 }
 
                 Thread.Sleep(100);
@@ -56,7 +56,7 @@ namespace PSNBot
             return achievements.OrderBy(a => a.TimeStamp);
         }
 
-        private static IEnumerable<AchievementEntry> GetAchievementsImpl(List<RecentActivityEntity.Feed> feed)
+        private static IEnumerable<AchievementEntry> GetAchievementsImpl(List<RecentActivityEntity.Feed> feed, Account account)
         {
             if (feed != null)
             {
@@ -70,9 +70,11 @@ namespace PSNBot
                         {
                             AchievementEntry achievementEntry = new AchievementEntry();
 
+                            achievementEntry.Account = account;
                             achievementEntry.TimeStamp = story.Date;
                             achievementEntry.Event = story.Caption;
                             achievementEntry.Source = story.Source.Meta;
+                            
                             targets = story.Targets;
 
                             var name = targets.FirstOrDefault(t => t.Type == "TROPHY_NAME");
@@ -101,6 +103,7 @@ namespace PSNBot
                     {
                         AchievementEntry achievementEntry = new AchievementEntry();
 
+                        achievementEntry.Account = account;
                         achievementEntry.TimeStamp = entry.Date;
                         achievementEntry.Event = entry.Caption;
                         achievementEntry.Source = entry.Source.Meta;
