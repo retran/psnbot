@@ -55,42 +55,38 @@ namespace PSNBot
                 if ((dt - _lastCheckDateTime).TotalSeconds > 60)
                 {
                     DateTime lastPhotoTimeStamp = LoadTimeStamp(".phototimestamp");
-
                     var msgs = _psnClient.GetMessages(lastPhotoTimeStamp).OrderBy(m => m.TimeStamp);
                     foreach (var msg in msgs)
                     {
                         var account = _accounts.GetByPSN(msg.Source);
 
-                        foreach (var id in account.Chats)
+                        if (account != null)
                         {
-                            var tlgMsg = await _client.SendMessage(new Telegram.SendMessageQuery()
+                            foreach (var id in account.Chats)
                             {
-                                ChatId = id,
-                                Text = string.Format("Пользователь <b>{0}</b> опубликовал изображение:", msg.Source),
-                                ParseMode = "HTML",
-                            });
+                                var tlgMsg = await _client.SendMessage(new Telegram.SendMessageQuery()
+                                {
+                                    ChatId = id,
+                                    Text = string.Format("Пользователь <b>{0} ({1})</b> опубликовал изображение:", account.PSNName, account.TelegramId),
+                                    ParseMode = "HTML",
+                                });
 
-                            var message = await _client.SendPhoto(new Telegram.SendPhotoQuery()
-                            {
-                                ChatId = id
-                            }, msg.Data);
+                                var message = await _client.SendPhoto(new Telegram.SendPhotoQuery()
+                                {
+                                    ChatId = id
+                                }, msg.Data);
 
-                            Thread.Sleep(1000);
+                                Thread.Sleep(1000);
+                            }
+                            lastPhotoTimeStamp = msg.TimeStamp;
                         }
-
-                        lastPhotoTimeStamp = msg.TimeStamp;
-
-                        Thread.Sleep(1000);
                     }
 
                     SaveTimeStamp(lastPhotoTimeStamp, ".phototimestamp");
 
-
                     DateTime lastTimeStamp = LoadTimeStamp(".timestamp");
-
                     _lastCheckDateTime = dt;
                     var achievements = await _psnClient.GetAchievements(_accounts.GetAllActive());
-
                     foreach (var ach in achievements.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
                     {
                         lastTimeStamp = ach.TimeStamp;
