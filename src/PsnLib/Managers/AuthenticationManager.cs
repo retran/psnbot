@@ -155,13 +155,13 @@ namespace PsnLib.Managers
             }
 
             var codeUrl = response.RequestMessage.RequestUri;
-            var queryString = UriExtensions.ParseQueryString(codeUrl.ToString());
+            var queryString = Tools.UriExtensions.ParseQueryString(codeUrl.ToString());
             if (queryString.ContainsKey("authentication_error"))
             {
                 throw new LoginFailedException("Wrong Username/Password");
             }
             if (!queryString.ContainsKey("targetUrl")) return null;
-            queryString = UriExtensions.ParseQueryString(WebUtility.UrlDecode(queryString["targetUrl"]));
+            queryString = Tools.UriExtensions.ParseQueryString(WebUtility.UrlDecode(queryString["targetUrl"]));
             if (!queryString.ContainsKey("code")) return null;
 
             var authManager = new AuthenticationManager();

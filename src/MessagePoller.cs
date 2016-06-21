@@ -195,30 +195,18 @@ namespace PSNBot
                             {
                                 ChatId = message.Chat.Id,
                                 ReplyToMessageId = message.MessageId,
-                                Text = "Не могу найти тебя в PSN"
+                                Text = "Не могу найти тебя в PSN."
                             });
                         }
                     }
                     else
                     {
-                        if (message.From.Id == 44941651)
+                        _client.SendMessage(new SendMessageQuery()
                         {
-                            _client.SendMessage(new SendMessageQuery()
-                            {
-                                ChatId = message.Chat.Id,
-                                ReplyToMessageId = message.MessageId,
-                                Text = "Пагром, ты пидор."
-                            });
-                        }
-                        else
-                        {
-                            _client.SendMessage(new SendMessageQuery()
-                            {
-                                ChatId = message.Chat.Id,
-                                ReplyToMessageId = message.MessageId,
-                                Text = "Я тебя уже добавил."
-                            });
-                        }
+                            ChatId = message.Chat.Id,
+                            ReplyToMessageId = message.MessageId,
+                            Text = "Я тебя уже добавил."
+                        });
                     }
                 }
                 else

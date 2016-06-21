@@ -57,6 +57,49 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PSNClient.cs" />
+    <Compile Include="PsnLib\Entities\FriendEntity.cs" />
+    <Compile Include="PsnLib\Entities\FriendTokenEntity.cs" />
+    <Compile Include="PsnLib\Entities\LiveBroadcastEntity.cs" />
+    <Compile Include="PsnLib\Entities\MessageEntity.cs" />
+    <Compile Include="PsnLib\Entities\MessageGroupEntity.cs" />
+    <Compile Include="PsnLib\Entities\NicoNicoEntity.cs" />
+    <Compile Include="PsnLib\Entities\NotificationEntity.cs" />
+    <Compile Include="PsnLib\Entities\RecentActivityEntity.cs" />
+    <Compile Include="PsnLib\Entities\SearchEntities\AvatarUrl.cs" />
+    <Compile Include="PsnLib\Entities\SearchEntities\FirstNameMatch.cs" />
+    <Compile Include="PsnLib\Entities\SearchEntities\LastNameMatch.cs" />
+    <Compile Include="PsnLib\Entities\SearchEntities\MiddleNameMatch.cs" />
+    <Compile Include="PsnLib\Entities\SearchEntities\PersonalDetail.cs" />
+    <Compile Include="PsnLib\Entities\SearchEntities\ProfilePictureUrl.cs" />
+    <Compile Include="PsnLib\Entities\SearchEntities\SearchResult.cs" />
+    <Compile Include="PsnLib\Entities\SearchResultsEntity.cs" />
+    <Compile Include="PsnLib\Entities\SessionInviteDetailEntity.cs" />
+    <Compile Include="PsnLib\Entities\SessionInviteEntity.cs" />
+    <Compile Include="PsnLib\Entities\TrophyDetailEntity.cs" />
+    <Compile Include="PsnLib\Entities\TrophyEntity.cs" />
+    <Compile Include="PsnLib\Entities\TwitchEntity.cs" />
+    <Compile Include="PsnLib\Entities\UserAccountEntity.cs" />
+    <Compile Include="PsnLib\Entities\UserAuthenticationEntity.cs" />
+    <Compile Include="PsnLib\Entities\UserEntity.cs" />
+    <Compile Include="PsnLib\Entities\UstreamEntity.cs" />
+    <Compile Include="PsnLib\Exceptions\LoginFailedException.cs" />
+    <Compile Include="PsnLib\Exceptions\RefreshTokenException.cs" />
+    <Compile Include="PsnLib\Interfaces\IAuthenticationManager.cs" />
+    <Compile Include="PsnLib\Interfaces\IWebManager.cs" />
+    <Compile Include="PsnLib\Managers\AuthenticationManager.cs" />
+    <Compile Include="PsnLib\Managers\FriendManager.cs" />
+    <Compile Include="PsnLib\Managers\LiveStreamManager.cs" />
+    <Compile Include="PsnLib\Managers\MessageManager.cs" />
+    <Compile Include="PsnLib\Managers\NotificationManager.cs" />
+    <Compile Include="PsnLib\Managers\RecentActivityManager.cs" />
+    <Compile Include="PsnLib\Managers\SearchManager.cs" />
+    <Compile Include="PsnLib\Managers\SessionInviteManager.cs" />
+    <Compile Include="PsnLib\Managers\TrophyDetailManager.cs" />
+    <Compile Include="PsnLib\Managers\TrophyManager.cs" />
+    <Compile Include="PsnLib\Managers\UserManager.cs" />
+    <Compile Include="PsnLib\Managers\WebManager.cs" />
+    <Compile Include="PsnLib\Tools\EndPoints.cs" />
+    <Compile Include="PsnLib\Tools\UrlExtensions.cs" />
     <Compile Include="Telegram\Audio.cs" />
     <Compile Include="Telegram\CallbackQuery.cs" />
     <Compile Include="Telegram\Chat.cs" />
@@ -86,12 +129,6 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\PsnLib\PsnLib.csproj">
-      <Project>{2d6f89be-b17c-473d-94a6-7003dbf0c41d}</Project>
-      <Name>PsnLib</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
