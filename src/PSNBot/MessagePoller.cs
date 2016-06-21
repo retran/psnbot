@@ -88,7 +88,7 @@ namespace PSNBot
 
                     DateTime lastTimeStamp = LoadTimeStamp(".timestamp");
                     _lastCheckDateTime = dt;
-                    var achievements = await _psnClient.GetAchievements(_accounts.GetAllActive());
+                    var achievements = _psnClient.GetAchievements(_accounts.GetAllActive());
                     foreach (var ach in achievements.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
                     {
                         lastTimeStamp = ach.TimeStamp;

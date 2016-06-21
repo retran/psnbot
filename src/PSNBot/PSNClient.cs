@@ -102,12 +102,12 @@ namespace PSNBot
 
                     return status;
                 }
+                return null;
             }
             catch (Exception e)
             {
-                ;
+                return null;
             }
-            return null;
         }
 
         public IEnumerable<ImageMessage> GetMessages(DateTime timestamp)
@@ -152,21 +152,25 @@ namespace PSNBot
             return task.Result;
         }
 
-        public async Task<IEnumerable<AchievementEntry>> GetAchievements(IEnumerable<Account> accounts)
+        public IEnumerable<AchievementEntry> GetAchievements(IEnumerable<Account> accounts)
         {
             var achievements = new List<AchievementEntry>();
 
-            foreach (var account in accounts)
+            var tasks = accounts.AsParallel().Select(async a =>
             {
-                var activity = await _recentActivityManager.GetActivityFeed(account.PSNName, 0, false, false, _userAccountEntity);
+                var activity = await _recentActivityManager.GetActivityFeed(a.PSNName, 0, false, false, _userAccountEntity);
 
                 if (activity != null)
                 {
-                    achievements.AddRange(GetAchievementsImpl(activity.feed, account));
+                    return GetAchievementsImpl(activity.feed, a);
                 }
-            }
 
-            return achievements.OrderBy(a => a.TimeStamp);
+                return new AchievementEntry[] { };
+            }).ToArray();
+
+            Task.WaitAll(tasks);
+
+            return tasks.SelectMany(t => t.Result);
         }
 
         private static IEnumerable<AchievementEntry> GetAchievementsImpl(List<RecentActivityEntity.Feed> feed, Account account)
