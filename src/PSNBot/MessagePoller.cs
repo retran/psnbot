@@ -8,6 +8,8 @@ using System.Net;
 using System.IO;
 using System.Globalization;
 using System.Text;
+using System.Collections.Generic;
+using PsnLib.Entities;
 
 namespace PSNBot
 {
@@ -67,7 +69,7 @@ namespace PSNBot
                                 var tlgMsg = await _client.SendMessage(new Telegram.SendMessageQuery()
                                 {
                                     ChatId = id,
-                                    Text = string.Format("Пользователь <b>{0} ({1})</b> опубликовал изображение:", account.PSNName, account.TelegramId),
+                                    Text = string.Format("Пользователь <b>{0} ({1})</b> опубликовал изображение:", account.PSNName, account.TelegramName),
                                     ParseMode = "HTML",
                                 });
 
@@ -225,7 +227,7 @@ namespace PSNBot
                     {
                         ChatId = message.Chat.Id,
                         ReplyToMessageId = message.MessageId,
-                        Text = "Укажи свой идентификатор в PSN."
+                        Text = "Укажи свой идентификатор в PSN (например, так: /register@clankbot <your psn id>)."
                     });
                 }
             }
@@ -304,28 +306,41 @@ namespace PSNBot
             {
                 var interests = message.Text.Remove(0, "/list@clankbot".Length).Trim();
                 StringBuilder sb = new StringBuilder();
-                foreach (var account in _accounts.GetAll().Where(a => string.IsNullOrEmpty(interests)
+
+                var filtered = _accounts.GetAll().Where(a => string.IsNullOrEmpty(interests)
                     || (!string.IsNullOrEmpty(a.Interests) && a.Interests.ToLower().Contains(interests.ToLower()))
                     || (!string.IsNullOrEmpty(a.TelegramName) && a.TelegramName.ToLower().Contains(interests.ToLower()))
-                    || (!string.IsNullOrEmpty(a.PSNName) && a.PSNName.ToLower().Contains(interests.ToLower()))))
+                    || (!string.IsNullOrEmpty(a.PSNName) && a.PSNName.ToLower().Contains(interests.ToLower())));
+
+                var lines = filtered.AsParallel().Select(async account =>
                 {
-                    sb.AppendLine(string.Format("Telegram: <b>{0}</b>\nPSN: <b>{1}</b>", account.TelegramName, account.PSNName));
+                    var builder = new StringBuilder();
+                    builder.AppendLine(string.Format("Telegram: <b>{0}</b>\nPSN: <b>{1}</b>", account.TelegramName, account.PSNName));
 
                     //if (!string.IsNullOrEmpty(interests))
                     {
-                        var status = _psnClient.GetStatus(account.PSNName);
+                        var status = await _psnClient.GetStatus(account.PSNName);
                         if (!string.IsNullOrEmpty(status))
                         {
-                            sb.AppendLine(string.Format("{0}", status));
+                            builder.AppendLine(string.Format("{0}", status));
                         }
                     }
 
                     if (!string.IsNullOrEmpty(account.Interests))
                     {
-                        sb.AppendLine(string.Format("{0}", account.Interests));
+                        builder.AppendLine(string.Format("{0}", account.Interests));
                     }
-                    sb.AppendLine();
+                    builder.AppendLine();
+                    return builder.ToString();
+                }).ToArray();
+
+                Task.WaitAll(lines);
+
+                foreach (var line in lines)
+                {
+                    sb.Append(line.Result);
                 }
+
                 if (string.IsNullOrEmpty(interests))
                 {
                     _client.SendMessage(new SendMessageQuery()
@@ -349,10 +364,9 @@ namespace PSNBot
 
             if (message.Text.StartsWith("/top@clankbot", StringComparison.OrdinalIgnoreCase))
             {
-                var accs = _accounts.GetAll();
-                var table = accs.Select(a =>
+                var tasks = _accounts.GetAll().AsParallel().Select(async a =>
                 {
-                    var user = _psnClient.GetUser(a.PSNName);
+                    var user = await _psnClient.GetUser(a.PSNName);
                     if (user == null)
                     {
                         return null;
@@ -365,13 +379,16 @@ namespace PSNBot
                         Rating = _psnClient.GetRating(user),
                         ThrophyLine = _psnClient.GetTrophyLine(user)
                     };
-                }).Where(t => t != null).OrderByDescending(t => t.Rating).Take(20);
+                }).ToArray();
+                Task.WaitAll(tasks);
+                var table = tasks.Where(t => t.Result != null).Select(t => t.Result)
+                    .OrderByDescending(t => t.Rating).Take(20);
 
                 StringBuilder sb = new StringBuilder();
                 int i = 1;
                 foreach (var t in table)
                 {
-                    sb.AppendLine(string.Format("{0}. {1} ({2}) {3}", i, t.PSNName, t.TelegramName, t.ThrophyLine));
+                    sb.AppendLine(string.Format("{0}. {1} {2}", i, !string.IsNullOrEmpty(t.TelegramName) ? t.TelegramName : t.PSNName, t.ThrophyLine));
                     i++;
                 }
 

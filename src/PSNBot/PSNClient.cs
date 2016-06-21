@@ -43,16 +43,16 @@ namespace PSNBot
             _userAccountEntity = task.Result;
         }
 
-        public UserEntity GetUser(string psnName)
+        public Task<UserEntity> GetUser(string psnName)
         {
             try
             {
-                var user = _userManager.GetUser(psnName, _userAccountEntity);
-                user.Wait();
-                return user.Result;
+                return _userManager.GetUser(psnName, _userAccountEntity);
             }
-            catch { }
-            return null;
+            catch
+            {
+                return null;
+            }
         }
 
         public long GetRating(UserEntity.TrophySummary throphies)
@@ -70,16 +70,15 @@ namespace PSNBot
             return 0;
         }
 
-        public string GetStatus(string psnName)
+        public async Task<string> GetStatus(string psnName)
         {
             try
             {
-                var user = _userManager.GetUser(psnName, _userAccountEntity);
-                user.Wait();
+                var user = await _userManager.GetUser(psnName, _userAccountEntity);
 
-                if (user.Result != null && user.Result.presence != null)
+                if (user != null && user.presence != null)
                 {
-                    var presence = user.Result.presence;
+                    var presence = user.presence;
                     var status = "Status: " + presence.PrimaryInfo.OnlineStatus;
                     if (presence.PrimaryInfo.GameTitleInfo != null)
                     {
@@ -91,9 +90,9 @@ namespace PSNBot
                         status += "\nLast seen: " + DateTime.Parse(presence.PrimaryInfo.LastOnlineDate, CultureInfo.InvariantCulture).ToString(CultureInfo.GetCultureInfo("ru-RU"));
                     }
 
-                    if (user.Result.trophySummary != null)
+                    if (user.trophySummary != null)
                     {
-                        var trophies = user.Result.trophySummary;
+                        var trophies = user.trophySummary;
                         status += string.Format("\n\nBronze: {0}\n", trophies.EarnedTrophies.Bronze);
                         status += string.Format("Silver: {0}\n", trophies.EarnedTrophies.Silver);
                         status += string.Format("Gold: {0}\n", trophies.EarnedTrophies.Gold);
@@ -104,7 +103,10 @@ namespace PSNBot
                     return status;
                 }
             }
-            catch { }
+            catch (Exception e)
+            {
+                ;
+            }
             return null;
         }
 
@@ -138,7 +140,6 @@ namespace PSNBot
                             TimeStamp = date
                         });
                     }
-                    Thread.Sleep(100);
                 }
             }
             return result;
@@ -163,8 +164,6 @@ namespace PSNBot
                 {
                     achievements.AddRange(GetAchievementsImpl(activity.feed, account));
                 }
-
-                Thread.Sleep(100);
             }
 
             return achievements.OrderBy(a => a.TimeStamp);
@@ -253,7 +252,7 @@ namespace PSNBot
             var throphies = user.trophySummary;
             if (throphies != null)
             {
-                return string.Format("[P {0}] [G {1}] [S {2}] [B {0}]", throphies.EarnedTrophies.Platinum, throphies.EarnedTrophies.Gold, throphies.EarnedTrophies.Silver, throphies.EarnedTrophies.Bronze);
+                return string.Format("[P {0}] [G {1}] [S {2}] [B {3}]", throphies.EarnedTrophies.Platinum, throphies.EarnedTrophies.Gold, throphies.EarnedTrophies.Silver, throphies.EarnedTrophies.Bronze);
             }
             return string.Empty;
         }
