@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using PsnLib.Entities;
 using System.Net;
+using PSNBot.Services;
 
 namespace PSNBot
 {
@@ -13,8 +14,9 @@ namespace PSNBot
     {
         static void Main(string[] args)
         {
-            var client = new PSNClient();
-            client.Login("retran@tolkien.ru", "");
+            var client = new PSNService();
+            var task = client.Login("retran@tolkien.ru", "");
+            task.Wait();
 
             var telegramClient = new Telegram.TelegramClient("");
 

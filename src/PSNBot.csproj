@@ -54,9 +54,11 @@
     <Compile Include="AccountManager.cs" />
     <Compile Include="AchievementEntry.cs" />
     <Compile Include="MessagePoller.cs" />
+    <Compile Include="Messages.cs" />
+    <Compile Include="Model\ImageMessage.cs" />
+    <Compile Include="Model\TrophyEntry.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PSNClient.cs" />
     <Compile Include="PsnLib\Entities\FriendEntity.cs" />
     <Compile Include="PsnLib\Entities\FriendTokenEntity.cs" />
     <Compile Include="PsnLib\Entities\LiveBroadcastEntity.cs" />
@@ -100,6 +102,8 @@
     <Compile Include="PsnLib\Managers\WebManager.cs" />
     <Compile Include="PsnLib\Tools\EndPoints.cs" />
     <Compile Include="PsnLib\Tools\UrlExtensions.cs" />
+    <Compile Include="Services\PSNService.cs" />
+    <Compile Include="Model\UserEntry.cs" />
     <Compile Include="Telegram\Audio.cs" />
     <Compile Include="Telegram\CallbackQuery.cs" />
     <Compile Include="Telegram\Chat.cs" />
@@ -130,6 +134,7 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

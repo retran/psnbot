@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Text;
 using System.Collections.Generic;
 using PsnLib.Entities;
+using PSNBot.Services;
 
 namespace PSNBot
 {
@@ -19,14 +20,14 @@ namespace PSNBot
         private long _offset = 0;
         private CancellationTokenSource _cancellationTokenSource;
         private bool _disposed = false;
-        private PSNClient _psnClient;
+        private PSNService _psnService;
         private AccountManager _accounts;
         private DateTime _lastCheckDateTime = DateTime.Now;
 
-        public MessagePoller(TelegramClient client, PSNClient psnClient)
+        public MessagePoller(TelegramClient client, PSNService psnService)
         {
             _client = client;
-            _psnClient = psnClient;
+            _psnService = psnService;
             _accounts = new AccountManager();
         }
 
@@ -57,7 +58,7 @@ namespace PSNBot
                 if ((dt - _lastCheckDateTime).TotalSeconds > 60)
                 {
                     DateTime lastPhotoTimeStamp = LoadTimeStamp(".phototimestamp");
-                    var msgs = _psnClient.GetMessages(lastPhotoTimeStamp).OrderBy(m => m.TimeStamp);
+                    var msgs = _psnService.GetMessages(lastPhotoTimeStamp).OrderBy(m => m.TimeStamp);
                     foreach (var msg in msgs)
                     {
                         var account = _accounts.GetByPSN(msg.Source);
@@ -88,8 +89,8 @@ namespace PSNBot
 
                     DateTime lastTimeStamp = LoadTimeStamp(".timestamp");
                     _lastCheckDateTime = dt;
-                    var achievements = _psnClient.GetAchievements(_accounts.GetAllActive());
-                    foreach (var ach in achievements.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
+                    var trophies = await _psnService.GetTrophies(_accounts.GetAllActive());
+                    foreach (var ach in trophies.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
                     {
                         lastTimeStamp = ach.TimeStamp;
 
@@ -163,7 +164,7 @@ namespace PSNBot
             return DateTime.UtcNow;
         }
 
-        private void Handle(Message message)
+        private async void Handle(Message message)
         {
             var acc = _accounts.GetById(message.From.Id);
             if (acc != null && acc.TelegramName != message.From.Username)
@@ -179,10 +180,11 @@ namespace PSNBot
                 {
                     if (_accounts.GetById(message.From.Id) == null && _accounts.GetByPSN(splitted[1].Trim()) == null)
                     {
-                        if (_psnClient.SendFriendRequest(splitted[1].Trim()))
+                        var success = await _psnService.SendFriendRequest(splitted[1].Trim());
+                        if (success)
                         {
                             _accounts.Register(message.From.Id, message.From.Username, splitted[1].Trim());
-                            _client.SendMessage(new SendMessageQuery()
+                            await _client.SendMessage(new SendMessageQuery()
                             {
                                 ChatId = message.Chat.Id,
                                 ReplyToMessageId = message.MessageId,
@@ -191,7 +193,7 @@ namespace PSNBot
                         }
                         else
                         {
-                            _client.SendMessage(new SendMessageQuery()
+                            await _client.SendMessage(new SendMessageQuery()
                             {
                                 ChatId = message.Chat.Id,
                                 ReplyToMessageId = message.MessageId,
@@ -201,7 +203,7 @@ namespace PSNBot
                     }
                     else
                     {
-                        _client.SendMessage(new SendMessageQuery()
+                        await _client.SendMessage(new SendMessageQuery()
                         {
                             ChatId = message.Chat.Id,
                             ReplyToMessageId = message.MessageId,
@@ -211,7 +213,7 @@ namespace PSNBot
                 }
                 else
                 {
-                    _client.SendMessage(new SendMessageQuery()
+                    await _client.SendMessage(new SendMessageQuery()
                     {
                         ChatId = message.Chat.Id,
                         ReplyToMessageId = message.MessageId,
@@ -225,7 +227,7 @@ namespace PSNBot
                 if (_accounts.GetById(message.From.Id) != null)
                 {
                     _accounts.Start(message.From.Id, message.Chat.Id);
-                    _client.SendMessage(new SendMessageQuery()
+                    await _client.SendMessage(new SendMessageQuery()
                     {
                         ChatId = message.Chat.Id,
                         ReplyToMessageId = message.MessageId,
@@ -234,7 +236,7 @@ namespace PSNBot
                 }
                 else
                 {
-                    _client.SendMessage(new SendMessageQuery()
+                    await _client.SendMessage(new SendMessageQuery()
                     {
                         ChatId = message.Chat.Id,
                         ReplyToMessageId = message.MessageId,
@@ -249,7 +251,7 @@ namespace PSNBot
                 {
                     var interests = message.Text.Remove(0, "/setinterests@clankbot".Length).Trim();
                     _accounts.SetInterests(message.From.Id, interests);
-                    _client.SendMessage(new SendMessageQuery()
+                    await _client.SendMessage(new SendMessageQuery()
                     {
                         ChatId = message.Chat.Id,
                         ReplyToMessageId = message.MessageId,
@@ -258,7 +260,7 @@ namespace PSNBot
                 }
                 else
                 {
-                    _client.SendMessage(new SendMessageQuery()
+                    await _client.SendMessage(new SendMessageQuery()
                     {
                         ChatId = message.Chat.Id,
                         ReplyToMessageId = message.MessageId,
@@ -272,7 +274,7 @@ namespace PSNBot
                 if (_accounts.GetById(message.From.Id) != null)
                 {
                     _accounts.Stop(message.From.Id, message.Chat.Id);
-                    _client.SendMessage(new SendMessageQuery()
+                    await _client.SendMessage(new SendMessageQuery()
                     {
                         ChatId = message.Chat.Id,
                         ReplyToMessageId = message.MessageId,
@@ -281,7 +283,7 @@ namespace PSNBot
                 }
                 else
                 {
-                    _client.SendMessage(new SendMessageQuery()
+                    await _client.SendMessage(new SendMessageQuery()
                     {
                         ChatId = message.Chat.Id,
                         ReplyToMessageId = message.MessageId,
@@ -305,9 +307,11 @@ namespace PSNBot
                     var builder = new StringBuilder();
                     builder.AppendLine(string.Format("Telegram: <b>{0}</b>\nPSN: <b>{1}</b>", account.TelegramName, account.PSNName));
 
+                    var userEntry = await _psnService.GetUser(account.PSNName);
+
                     //if (!string.IsNullOrEmpty(interests))
                     {
-                        var status = await _psnClient.GetStatus(account.PSNName);
+                        var status = userEntry.GetStatus();
                         if (!string.IsNullOrEmpty(status))
                         {
                             builder.AppendLine(string.Format("{0}", status));
@@ -331,7 +335,7 @@ namespace PSNBot
 
                 if (string.IsNullOrEmpty(interests))
                 {
-                    _client.SendMessage(new SendMessageQuery()
+                    await _client.SendMessage(new SendMessageQuery()
                     {
                         ChatId = message.From.Id,
                         Text = sb.ToString(),
@@ -340,7 +344,7 @@ namespace PSNBot
                 }
                 else
                 {
-                    _client.SendMessage(new SendMessageQuery()
+                    await _client.SendMessage(new SendMessageQuery()
                     {
                         ChatId = message.Chat.Id,
                         ReplyToMessageId = message.MessageId,
@@ -354,7 +358,7 @@ namespace PSNBot
             {
                 var tasks = _accounts.GetAll().AsParallel().Select(async a =>
                 {
-                    var user = await _psnClient.GetUser(a.PSNName);
+                    var user = await _psnService.GetUser(a.PSNName);
                     if (user == null)
                     {
                         return null;
@@ -364,8 +368,8 @@ namespace PSNBot
                     {
                         TelegramName = a.TelegramName,
                         PSNName = a.PSNName,
-                        Rating = _psnClient.GetRating(user),
-                        ThrophyLine = _psnClient.GetTrophyLine(user)
+                        Rating = user.GetRating(),
+                        ThrophyLine = user.GetTrophyLine()
                     };
                 }).ToArray();
                 Task.WaitAll(tasks);
@@ -380,7 +384,7 @@ namespace PSNBot
                     i++;
                 }
 
-                _client.SendMessage(new SendMessageQuery()
+                await _client.SendMessage(new SendMessageQuery()
                 {
                     ChatId = message.Chat.Id,
                     ReplyToMessageId = message.MessageId,
