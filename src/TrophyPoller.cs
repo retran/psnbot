@@ -16,19 +16,18 @@ namespace PSNBot
 {
     public class TrophyPoller : IDisposable
     {
-        private TelegramClient _client;
-        private long _offset = 0;
+        private TelegramClient _telegramClient;
         private CancellationTokenSource _cancellationTokenSource;
         private bool _disposed = false;
         private PSNService _psnService;
         private AccountManager _accounts;
         private DateTime _lastCheckDateTime = DateTime.Now;
 
-        public TrophyPoller(TelegramClient client, PSNService psnService)
+        public TrophyPoller(TelegramClient telegramClient, PSNService psnService, AccountManager accounts)
         {
-            _client = client;
+            _telegramClient = telegramClient;
             _psnService = psnService;
-            _accounts = new AccountManager();
+            _accounts = accounts;
         }
 
         private async Task Poll()
@@ -68,13 +67,13 @@ namespace PSNBot
                         {
                             if (!string.IsNullOrEmpty(ach.Image))
                             {
-                                var message = await _client.SendPhoto(new Telegram.SendPhotoQuery()
+                                var message = await _telegramClient.SendPhoto(new Telegram.SendPhotoQuery()
                                 {
                                     ChatId = id
                                 }, image);
                             }
 
-                            var msg = await _client.SendMessage(new Telegram.SendMessageQuery()
+                            var msg = await _telegramClient.SendMessage(new Telegram.SendMessageQuery()
                             {
                                 ChatId = id,
                                 Text = ach.GetTelegramMessage(),

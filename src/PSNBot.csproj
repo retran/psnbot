@@ -76,6 +76,10 @@
   <ItemGroup>
     <Compile Include="AccountManager.cs" />
     <Compile Include="AchievementEntry.cs" />
+    <Compile Include="Commands\Command.cs" />
+    <Compile Include="Commands\ListCommand.cs" />
+    <Compile Include="Commands\SearchCommand.cs" />
+    <Compile Include="Commands\TopCommand.cs" />
     <Compile Include="ImagePoller.cs" />
     <Compile Include="MessagePoller.cs" />
     <Compile Include="Messages.cs" />

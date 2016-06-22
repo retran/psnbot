@@ -19,12 +19,12 @@ namespace PSNBot
             task.Wait();
 
             var telegramClient = new Telegram.TelegramClient("");
-
+            var accounts = new AccountManager();
             Console.OutputEncoding = System.Text.Encoding.Unicode;
 
-            using (var poller = new MessagePoller(telegramClient, client))
-            using (var imagePoller = new ImagePoller(telegramClient, client))
-            using (var trophyPoller = new TrophyPoller(telegramClient, client))
+            using (var poller = new MessagePoller(telegramClient, client, accounts))
+            using (var imagePoller = new ImagePoller(telegramClient, client, accounts))
+            using (var trophyPoller = new TrophyPoller(telegramClient, client, accounts))
             {
                 poller.Start();
                 imagePoller.Start();

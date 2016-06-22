@@ -16,19 +16,18 @@ namespace PSNBot
 {
     public class ImagePoller : IDisposable
     {
-        private TelegramClient _client;
-        private long _offset = 0;
+        private TelegramClient _telegramClient;
         private CancellationTokenSource _cancellationTokenSource;
         private bool _disposed = false;
         private PSNService _psnService;
         private AccountManager _accounts;
         private DateTime _lastCheckDateTime = DateTime.Now;
 
-        public ImagePoller(TelegramClient client, PSNService psnService)
+        public ImagePoller(TelegramClient telegramClient, PSNService psnService, AccountManager accounts)
         {
-            _client = client;
+            _telegramClient = telegramClient;
             _psnService = psnService;
-            _accounts = new AccountManager();
+            _accounts = accounts;
         }
 
         private async Task Poll()
@@ -48,14 +47,14 @@ namespace PSNBot
                         {
                             foreach (var id in account.Chats)
                             {
-                                var tlgMsg = await _client.SendMessage(new Telegram.SendMessageQuery()
+                                var tlgMsg = await _telegramClient.SendMessage(new Telegram.SendMessageQuery()
                                 {
                                     ChatId = id,
                                     Text = string.Format("Пользователь <b>{0} ({1})</b> опубликовал изображение:", account.PSNName, account.TelegramName),
                                     ParseMode = "HTML",
                                 });
 
-                                var message = await _client.SendPhoto(new Telegram.SendPhotoQuery()
+                                var message = await _telegramClient.SendPhoto(new Telegram.SendPhotoQuery()
                                 {
                                     ChatId = id
                                 }, msg.Data);

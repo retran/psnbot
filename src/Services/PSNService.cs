@@ -79,20 +79,23 @@ namespace PSNBot.Services
                 var result = new List<ImageMessage>();
                 var id = mg.MessageGroupId;
                 var conversation = await _messageManager.GetGroupConversation(id, _userAccountEntity);
-                foreach (var msg in conversation.messages.Where(m => m.contentKeys.Any(k => string.Equals(k, "image-data-0", StringComparison.OrdinalIgnoreCase))))
+                if (conversation.messages != null)
                 {
-                    var date = DateTime.Parse(msg.receivedDate, CultureInfo.InvariantCulture).ToUniversalTime();
-                    if (date > timestamp)
+                    foreach (var msg in conversation.messages.Where(m => m.contentKeys.Any(k => string.Equals(k, "image-data-0", StringComparison.OrdinalIgnoreCase))))
                     {
-                        var image = await _messageManager.GetImageMessageContent(id, msg, _userAccountEntity);
-                        byte[] data = new byte[image.Length];
-                        image.Read(data, 0, (int)image.Length);
-                        result.Add(new ImageMessage()
+                        var date = DateTime.Parse(msg.receivedDate, CultureInfo.InvariantCulture).ToUniversalTime();
+                        if (date > timestamp)
                         {
-                            Data = data,
-                            Source = msg.senderOnlineId,
-                            TimeStamp = date
-                        });
+                            var image = await _messageManager.GetImageMessageContent(id, msg, _userAccountEntity);
+                            byte[] data = new byte[image.Length];
+                            image.Read(data, 0, (int)image.Length);
+                            result.Add(new ImageMessage()
+                            {
+                                Data = data,
+                                Source = msg.senderOnlineId,
+                                TimeStamp = date
+                            });
+                        }
                     }
                 }
                 return result;

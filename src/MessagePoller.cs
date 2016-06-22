@@ -11,6 +11,7 @@ using System.Text;
 using System.Collections.Generic;
 using PsnLib.Entities;
 using PSNBot.Services;
+using PSNBot.Commands;
 
 namespace PSNBot
 {
@@ -23,15 +24,23 @@ namespace PSNBot
         private PSNService _psnService;
         private AccountManager _accounts;
         private DateTime _lastCheckDateTime = DateTime.Now;
+        private IEnumerable<Command> _commands;
 
-        public MessagePoller(TelegramClient client, PSNService psnService)
+        public MessagePoller(TelegramClient client, PSNService psnService, AccountManager accounts)
         {
             _client = client;
             _psnService = psnService;
-            _accounts = new AccountManager();
+            _accounts = accounts;
+
+            _commands = new Command[]
+            {
+                new TopCommand(_psnService, client, _accounts),
+                new SearchCommand(_psnService, client, _accounts),
+                new ListCommand(_psnService, client, _accounts)
+            };
         }
 
-        private async Task PollTelegram()
+        private async Task Poll()
         {
             var updates = await _client.GetUpdates(new GetUpdatesQuery()
             {
@@ -53,121 +62,6 @@ namespace PSNBot
             }
         }
 
-        private async Task Poll()
-        {
-            await PollTelegram();
-
-            try
-            {
-                var dt = DateTime.Now;
-                if ((dt - _lastCheckDateTime).TotalSeconds > 60)
-                {
-                    DateTime lastPhotoTimeStamp = LoadTimeStamp(".phototimestamp");
-                    var msgs = (await _psnService.GetMessages(lastPhotoTimeStamp)).OrderBy(m => m.TimeStamp);
-                    foreach (var msg in msgs)
-                    {
-                        var account = _accounts.GetByPSN(msg.Source);
-
-                        if (account != null)
-                        {
-                            foreach (var id in account.Chats)
-                            {
-                                var tlgMsg = await _client.SendMessage(new Telegram.SendMessageQuery()
-                                {
-                                    ChatId = id,
-                                    Text = string.Format("Пользователь <b>{0} ({1})</b> опубликовал изображение:", account.PSNName, account.TelegramName),
-                                    ParseMode = "HTML",
-                                });
-
-                                var message = await _client.SendPhoto(new Telegram.SendPhotoQuery()
-                                {
-                                    ChatId = id
-                                }, msg.Data);
-
-                                Thread.Sleep(1000);
-                            }
-                            lastPhotoTimeStamp = msg.TimeStamp;
-                        }
-                    }
-                    SaveTimeStamp(lastPhotoTimeStamp, ".phototimestamp");
-
-                    DateTime lastTimeStamp = LoadTimeStamp(".timestamp");
-                    _lastCheckDateTime = dt;
-                    var trophies = await _psnService.GetTrophies(_accounts.GetAllActive());
-                    foreach (var ach in trophies.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
-                    {
-                        lastTimeStamp = ach.TimeStamp;
-
-                        var account = _accounts.GetByPSN(ach.Source);
-                        if (account == null)
-                        {
-                            continue;
-                        }
-
-                        if (!account.Chats.Any())
-                        {
-                            continue;
-                        }
-
-                        byte[] image = null;
-
-                        if (!string.IsNullOrEmpty(ach.Image))
-                        {
-                            WebClient myWebClient = new WebClient();
-                            image = myWebClient.DownloadData(ach.Image);
-                        }
-
-                        foreach (var id in account.Chats)
-                        {
-                            if (!string.IsNullOrEmpty(ach.Image))
-                            {
-                                var message = await _client.SendPhoto(new Telegram.SendPhotoQuery()
-                                {
-                                    ChatId = id
-                                }, image);
-                            }
-
-                            var msg = await _client.SendMessage(new Telegram.SendMessageQuery()
-                            {
-                                ChatId = id,
-                                Text = ach.GetTelegramMessage(),
-                                ParseMode = "HTML",
-                            });
-                            Thread.Sleep(1000);
-                        }
-                    }
-                    SaveTimeStamp(lastTimeStamp, ".timestamp");
-                }
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
-            }
-        }
-
-        private void SaveTimeStamp(DateTime stamp, string filename)
-        {
-            using (var sw = new StreamWriter(filename))
-            {
-                sw.Write(stamp.ToString(CultureInfo.InvariantCulture));
-                sw.Flush();
-            }
-        }
-
-        private DateTime LoadTimeStamp(string filename)
-        {
-            if (File.Exists(filename))
-            {
-                using (var sr = new StreamReader(filename))
-                {
-                    var line = sr.ReadLine();
-                    return DateTime.Parse(line, CultureInfo.InvariantCulture);
-                }
-            }
-
-            return DateTime.UtcNow;
-        }
-
         private async void Handle(Message message)
         {
             var acc = _accounts.GetById(message.From.Id);
@@ -175,6 +69,12 @@ namespace PSNBot
             {
                 acc.TelegramName = message.From.Username;
                 _accounts.Persist();
+            }
+
+            var command = _commands.FirstOrDefault(c => c.IsApplicable(message));
+            if (command != null)
+            {
+                await command.Handle(message);
             }
 
             if (message.Text.StartsWith("/register@clankbot", StringComparison.OrdinalIgnoreCase))
@@ -294,134 +194,6 @@ namespace PSNBot
                         Text = "Сначала зарегистрируйся."
                     });
                 }
-            }
-
-            if (message.Text.StartsWith("/list@clankbot", StringComparison.OrdinalIgnoreCase))
-            {
-                var interests = message.Text.Remove(0, "/list@clankbot".Length).Trim();
-                StringBuilder sb = new StringBuilder();
-
-                var filtered = _accounts.GetAll().Where(a => string.IsNullOrEmpty(interests)
-                    || (!string.IsNullOrEmpty(a.Interests) && a.Interests.ToLower().Contains(interests.ToLower()))
-                    || (!string.IsNullOrEmpty(a.TelegramName) && a.TelegramName.ToLower().Contains(interests.ToLower()))
-                    || (!string.IsNullOrEmpty(a.PSNName) && a.PSNName.ToLower().Contains(interests.ToLower())));
-
-                var lines = filtered.AsParallel().Select(async account =>
-                {
-                    var builder = new StringBuilder();
-                    builder.AppendLine(string.Format("Telegram: <b>{0}</b>\nPSN: <b>{1}</b>", account.TelegramName, account.PSNName));
-
-                    var userEntry = await _psnService.GetUser(account.PSNName);
-
-                    //if (!string.IsNullOrEmpty(interests))
-                    {
-                        var status = userEntry.GetStatus();
-                        if (!string.IsNullOrEmpty(status))
-                        {
-                            builder.AppendLine(string.Format("{0}", status));
-                        }
-                    }
-
-                    if (!string.IsNullOrEmpty(account.Interests))
-                    {
-                        builder.AppendLine(string.Format("{0}", account.Interests));
-                    }
-                    builder.AppendLine();
-                    return builder.ToString();
-                }).ToArray();
-
-                Task.WaitAll(lines);
-
-                foreach (var line in lines)
-                {
-                    if (sb.Length + line.Result.Length < 4096)
-                    {
-                        sb.Append(line.Result);
-                    }
-                    else
-                    {
-                        if (string.IsNullOrEmpty(interests))
-                        {
-                            await _client.SendMessage(new SendMessageQuery()
-                            {
-                                ChatId = message.From.Id,
-                                Text = sb.ToString(),
-                                ParseMode = "HTML",
-                            });
-                        }
-                        else
-                        {
-                            await _client.SendMessage(new SendMessageQuery()
-                            {
-                                ChatId = message.Chat.Id,
-                                ReplyToMessageId = message.MessageId,
-                                Text = sb.ToString(),
-                                ParseMode = "HTML",
-                            });
-                        }
-                        sb.Clear();
-                        sb.Append(line.Result);
-                    }
-                }
-
-                if (string.IsNullOrEmpty(interests))
-                {
-                    await _client.SendMessage(new SendMessageQuery()
-                    {
-                        ChatId = message.From.Id,
-                        Text = sb.ToString(),
-                        ParseMode = "HTML",
-                    });
-                }
-                else
-                {
-                    await _client.SendMessage(new SendMessageQuery()
-                    {
-                        ChatId = message.Chat.Id,
-                        ReplyToMessageId = message.MessageId,
-                        Text = sb.ToString(),
-                        ParseMode = "HTML",
-                    });
-                }
-            }
-
-            if (message.Text.StartsWith("/top@clankbot", StringComparison.OrdinalIgnoreCase))
-            {
-                var tasks = _accounts.GetAll().AsParallel().Select(async a =>
-                {
-                    var user = await _psnService.GetUser(a.PSNName);
-                    if (user == null)
-                    {
-                        return null;
-                    }
-
-                    return new
-                    {
-                        TelegramName = a.TelegramName,
-                        PSNName = a.PSNName,
-                        Rating = user.GetRating(),
-                        ThrophyLine = user.GetTrophyLine()
-                    };
-                }).ToArray();
-                Task.WaitAll(tasks);
-                var table = tasks.Where(t => t.Result != null).Select(t => t.Result)
-                    .OrderByDescending(t => t.Rating).Take(20);
-
-                StringBuilder sb = new StringBuilder();
-                int i = 1;
-                foreach (var t in table)
-                {
-                    sb.AppendLine(string.Format("{0}. {1} {2}", i, !string.IsNullOrEmpty(t.TelegramName) ? t.TelegramName : t.PSNName, t.ThrophyLine));
-                    i++;
-                }
-
-                await _client.SendMessage(new SendMessageQuery()
-                {
-                    ChatId = message.Chat.Id,
-                    ReplyToMessageId = message.MessageId,
-                    Text = sb.ToString(),
-                    ParseMode = "HTML",
-                });
             }
         }
 
