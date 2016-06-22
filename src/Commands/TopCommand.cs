@@ -31,14 +31,13 @@ namespace PSNBot.Commands
 
         public override async Task<bool> Handle(Message message)
         {
-            var tasks = _accounts.GetAll().AsParallel().Select(async a =>
+            var entries = await Task.WhenAll(_accounts.GetAll().AsParallel().Select(async a =>
             {
                 var user = await _psnService.GetUser(a.PSNName);
                 if (user == null)
                 {
                     return null;
                 }
-
                 return new
                 {
                     TelegramName = a.TelegramName,
@@ -46,9 +45,9 @@ namespace PSNBot.Commands
                     Rating = user.GetRating(),
                     ThrophyLine = user.GetTrophyLine()
                 };
-            }).ToArray();
-            Task.WaitAll(tasks);
-            var table = tasks.Where(t => t.Result != null).Select(t => t.Result)
+            }).ToArray());
+
+            var table = entries.Where(t => t != null)
                 .OrderByDescending(t => t.Rating).Take(20);
 
             StringBuilder sb = new StringBuilder();

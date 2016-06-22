@@ -22,7 +22,7 @@ namespace PSNBot.Commands
             _psnService = psnService;
             _telegramClient = telegramClient;
             _accounts = accounts;
-            _regex = new Regex("/search@clankbot\\s+(.+)", RegexOptions.IgnoreCase);
+            _regex = new Regex("/search@clankbot(\\s+(?<param>.+))?", RegexOptions.IgnoreCase);
         }
 
         public override bool IsApplicable(Message message)
@@ -32,13 +32,20 @@ namespace PSNBot.Commands
 
         public override async Task<bool> Handle(Message message)
         {
-            var match = _regex.Match(message.Text);
-            if (match.Groups.Count < 2)
+            var match = _regex.Match(message.Text.Trim());
+            if (!match.Groups["param"].Success)
             {
-                return false; // send error message
+                await _telegramClient.SendMessage(new SendMessageQuery()
+                {
+                    ChatId = message.Chat.Id,
+                    ReplyToMessageId = message.MessageId,
+                    Text = "Пожалуйста, укажи что ты хочешь найти. Например: /search@clankbot Dark Souls",
+                    ParseMode = "HTML",
+                });
+                return false; 
             }
 
-            var interests = match.Groups[1].Value;
+            var interests = match.Groups["param"].Value;
             StringBuilder sb = new StringBuilder();
 
             var filtered = _accounts.GetAll().Where(a => string.IsNullOrEmpty(interests)

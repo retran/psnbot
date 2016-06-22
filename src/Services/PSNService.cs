@@ -67,16 +67,16 @@ namespace PSNBot.Services
             }
         }
 
-        public async Task<IEnumerable<ImageMessage>> GetMessages(DateTime timestamp)
+        public async Task<IEnumerable<Image>> GetImages(DateTime timestamp)
         {
             var groups = await _messageManager.GetMessageGroup(_userAccountEntity.Entity.OnlineId, _userAccountEntity);
             if (groups == null || groups.MessageGroups == null || !groups.MessageGroups.Any())
             {
-                return new ImageMessage[] { };
+                return new Image[] { };
             }
             var tasks = groups.MessageGroups.AsParallel().Select(async mg =>
             {
-                var result = new List<ImageMessage>();
+                var result = new List<Image>();
                 var id = mg.MessageGroupId;
                 var conversation = await _messageManager.GetGroupConversation(id, _userAccountEntity);
                 if (conversation.messages != null)
@@ -89,7 +89,7 @@ namespace PSNBot.Services
                             var image = await _messageManager.GetImageMessageContent(id, msg, _userAccountEntity);
                             byte[] data = new byte[image.Length];
                             image.Read(data, 0, (int)image.Length);
-                            result.Add(new ImageMessage()
+                            result.Add(new Image()
                             {
                                 Data = data,
                                 Source = msg.senderOnlineId,

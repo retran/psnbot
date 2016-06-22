@@ -10,6 +10,10 @@ using PSNBot.Services;
 
 namespace PSNBot
 {
+    // test - -120625429
+    // main - -1001017895589
+
+
     public class Program
     {
         static void Main(string[] args)
@@ -22,9 +26,9 @@ namespace PSNBot
             var accounts = new AccountManager();
             Console.OutputEncoding = System.Text.Encoding.Unicode;
 
-            using (var poller = new MessagePoller(telegramClient, client, accounts))
-            using (var imagePoller = new ImagePoller(telegramClient, client, accounts))
-            using (var trophyPoller = new TrophyPoller(telegramClient, client, accounts))
+            using (var poller = new MessagePoller(telegramClient, client, accounts, -120625429))
+            using (var imagePoller = new ImagePoller(telegramClient, client, accounts, -120625429))
+            using (var trophyPoller = new TrophyPoller(telegramClient, client, accounts, -120625429))
             {
                 poller.Start();
                 imagePoller.Start();

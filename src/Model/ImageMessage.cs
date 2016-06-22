@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PSNBot.Model
 {
-    public class ImageMessage
+    public class Image
     {
         public DateTime TimeStamp { get; set; }
 

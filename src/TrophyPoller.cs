@@ -22,9 +22,11 @@ namespace PSNBot
         private PSNService _psnService;
         private AccountManager _accounts;
         private DateTime _lastCheckDateTime = DateTime.Now;
+        private long _chatId;
 
-        public TrophyPoller(TelegramClient telegramClient, PSNService psnService, AccountManager accounts)
+        public TrophyPoller(TelegramClient telegramClient, PSNService psnService, AccountManager accounts, long chatId)
         {
+            _chatId = chatId;
             _telegramClient = telegramClient;
             _psnService = psnService;
             _accounts = accounts;
@@ -69,13 +71,13 @@ namespace PSNBot
                             {
                                 var message = await _telegramClient.SendPhoto(new Telegram.SendPhotoQuery()
                                 {
-                                    ChatId = id
+                                    ChatId = _chatId
                                 }, image);
                             }
 
                             var msg = await _telegramClient.SendMessage(new Telegram.SendMessageQuery()
                             {
-                                ChatId = id,
+                                ChatId = _chatId,
                                 Text = ach.GetTelegramMessage(),
                                 ParseMode = "HTML",
                             });

@@ -22,9 +22,11 @@ namespace PSNBot
         private PSNService _psnService;
         private AccountManager _accounts;
         private DateTime _lastCheckDateTime = DateTime.Now;
+        private long _chatId;
 
-        public ImagePoller(TelegramClient telegramClient, PSNService psnService, AccountManager accounts)
+        public ImagePoller(TelegramClient telegramClient, PSNService psnService, AccountManager accounts, long chatId)
         {
+            _chatId = chatId;
             _telegramClient = telegramClient;
             _psnService = psnService;
             _accounts = accounts;
@@ -38,31 +40,28 @@ namespace PSNBot
                 if ((dt - _lastCheckDateTime).TotalSeconds > 60)
                 {
                     DateTime lastPhotoTimeStamp = LoadTimeStamp(".phototimestamp");
-                    var msgs = (await _psnService.GetMessages(lastPhotoTimeStamp)).OrderBy(m => m.TimeStamp);
+                    var msgs = (await _psnService.GetImages(lastPhotoTimeStamp)).OrderBy(m => m.TimeStamp);
                     foreach (var msg in msgs)
                     {
                         var account = _accounts.GetByPSN(msg.Source);
 
                         if (account != null)
                         {
-                            foreach (var id in account.Chats)
+                            var tlgMsg = await _telegramClient.SendMessage(new Telegram.SendMessageQuery()
                             {
-                                var tlgMsg = await _telegramClient.SendMessage(new Telegram.SendMessageQuery()
-                                {
-                                    ChatId = id,
-                                    Text = string.Format("Пользователь <b>{0} ({1})</b> опубликовал изображение:", account.PSNName, account.TelegramName),
-                                    ParseMode = "HTML",
-                                });
+                                ChatId = _chatId,
+                                Text = string.Format("Пользователь <b>{0} ({1})</b> опубликовал изображение:", account.PSNName, account.TelegramName),
+                                ParseMode = "HTML",
+                            });
 
-                                var message = await _telegramClient.SendPhoto(new Telegram.SendPhotoQuery()
-                                {
-                                    ChatId = id
-                                }, msg.Data);
+                            var message = await _telegramClient.SendPhoto(new Telegram.SendPhotoQuery()
+                            {
+                                ChatId = _chatId
+                            }, msg.Data);
 
-                                Thread.Sleep(1000);
-                            }
-                            lastPhotoTimeStamp = msg.TimeStamp;
+                            Thread.Sleep(1000);
                         }
+                        lastPhotoTimeStamp = msg.TimeStamp;
                     }
                     SaveTimeStamp(lastPhotoTimeStamp, ".phototimestamp");
                 }

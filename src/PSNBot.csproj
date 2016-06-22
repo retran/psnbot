@@ -130,6 +130,7 @@
     <Compile Include="PsnLib\Managers\WebManager.cs" />
     <Compile Include="PsnLib\Tools\EndPoints.cs" />
     <Compile Include="PsnLib\Tools\UrlExtensions.cs" />
+    <Compile Include="Services\AccountService.cs" />
     <Compile Include="Services\PSNService.cs" />
     <Compile Include="Model\UserEntry.cs" />
     <Compile Include="Telegram\Audio.cs" />

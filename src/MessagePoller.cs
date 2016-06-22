@@ -25,9 +25,11 @@ namespace PSNBot
         private AccountManager _accounts;
         private DateTime _lastCheckDateTime = DateTime.Now;
         private IEnumerable<Command> _commands;
+        private long _chatId;
 
-        public MessagePoller(TelegramClient client, PSNService psnService, AccountManager accounts)
+        public MessagePoller(TelegramClient client, PSNService psnService, AccountManager accounts, long chatId)
         {
+            _chatId = chatId;
             _client = client;
             _psnService = psnService;
             _accounts = accounts;
@@ -54,9 +56,8 @@ namespace PSNBot
 
             foreach (var update in updates.Result)
             {
-                if (update.Message != null && !string.IsNullOrEmpty(update.Message.Text))
+                if (update.Message != null && (!string.IsNullOrEmpty(update.Message.Text) || update.Message.NewChatMember != null) && (update.Message.Chat.Id == _chatId || update.Message.Chat.Type == "private"))
                 {
-                    Trace.WriteLine(string.Format("{0}\t{1}\t{2}", DateTime.Now, update.Message.From.Username, update.Message.Text));
                     Handle(update.Message);
                 }
             }
@@ -71,6 +72,16 @@ namespace PSNBot
                 _accounts.Persist();
             }
 
+            if (message.NewChatMember != null)
+            {
+                await _client.SendMessage(new SendMessageQuery()
+                {
+                    ChatId = message.Chat.Id,
+                    Text = Messages.GetWelcomeMessage(message.NewChatMember)
+                });
+                return;
+            }
+            
             var command = _commands.FirstOrDefault(c => c.IsApplicable(message));
             if (command != null)
             {
