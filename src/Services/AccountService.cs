@@ -28,14 +28,19 @@ namespace PSNBot.Services
             return _databaseService.Select<Account>("PSNName", name).FirstOrDefault();
         }
 
-        public IEnumerable<Account> GetAllActive()
+        public IEnumerable<Account> GetAllWithShowTrophies()
         {
-            return _databaseService.Select<Account>("Confirmed", true);
+            return _databaseService.Select<Account>("ShowTrophies", true);
         }
 
         public IEnumerable<Account> GetAll()
         {
             return _databaseService.Select<Account>();
+        }
+
+        public IEnumerable<Account> Search(string text)
+        {
+            return _databaseService.Search<Account>(text);
         }
     }
 }

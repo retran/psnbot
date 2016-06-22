@@ -40,7 +40,7 @@ namespace PSNBot
             try
             {
                 var dt = DateTime.Now;
-                if ((dt - _lastCheckDateTime).TotalSeconds > 60)
+                if ((dt - _lastCheckDateTime).TotalSeconds > 30)
                 {
                     DateTime lastPhotoTimeStamp = LoadTimeStamp(".phototimestamp");
                     var msgs = (await _psnService.GetImages(lastPhotoTimeStamp)).OrderBy(m => m.TimeStamp);
@@ -89,7 +89,7 @@ namespace PSNBot
             var timestamp = _databaseService.Select<TimeStamp>("id", id).FirstOrDefault();
             if (timestamp != null)
             {
-                return timestamp.Stamp;
+                return timestamp.Stamp.ToUniversalTime();
             }
 
             return DateTime.UtcNow;

@@ -22,7 +22,7 @@ namespace PSNBot.Commands
             _psnService = psnService;
             _telegramClient = telegramClient;
             _accounts = accounts;
-            _regex = new Regex("/search@clankbot(\\s+(?<param>.+))?", RegexOptions.IgnoreCase);
+            _regex = new Regex("/search(\\s+(?<param>.+))?", RegexOptions.IgnoreCase);
         }
 
         public override bool IsApplicable(Message message)
@@ -45,14 +45,8 @@ namespace PSNBot.Commands
                 return false; 
             }
 
-            var interests = match.Groups["param"].Value;
-            StringBuilder sb = new StringBuilder();
-
-            var filtered = _accounts.GetAll().Where(a => string.IsNullOrEmpty(interests)
-                || (!string.IsNullOrEmpty(a.Interests) && a.Interests.ToLower().Contains(interests.ToLower()))
-                || (!string.IsNullOrEmpty(a.TelegramName) && a.TelegramName.ToLower().Contains(interests.ToLower()))
-                || (!string.IsNullOrEmpty(a.PSNName) && a.PSNName.ToLower().Contains(interests.ToLower())));
-
+            var text = match.Groups["param"].Value;
+            var filtered = _accounts.Search(text);
             var lines = filtered.AsParallel().Select(async account =>
             {
                 var builder = new StringBuilder();
@@ -73,6 +67,7 @@ namespace PSNBot.Commands
 
             Task.WaitAll(lines);
 
+            StringBuilder sb = new StringBuilder();
             foreach (var line in lines)
             {
                 if (sb.Length + line.Result.Length < 4096)

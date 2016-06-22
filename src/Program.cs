@@ -23,7 +23,7 @@ namespace PSNBot
             task.Wait();
 
             var telegramClient = new Telegram.TelegramClient("");
-            var database = new DatabaseService("psnbot.sqlite");
+            var database = new DatabaseService("../psnbot.sqlite");
 
             var accounts = new AccountService(database);
 

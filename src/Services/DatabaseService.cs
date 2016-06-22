@@ -123,6 +123,42 @@ namespace PSNBot.Services
             }
         }
 
+        private T Map<T>(SQLiteDataReader reader)
+        {
+            var type = typeof(T);
+            var props = type.GetProperties();
+
+            var record = (T)Activator.CreateInstance(type);
+
+            int i = 0;
+            foreach (var prop in props)
+            {
+                var propertyType = prop.PropertyType;
+
+                if (propertyType == typeof(long))
+                {
+                    prop.SetValue(record, reader.GetInt64(i));
+                }
+
+                if (propertyType == typeof(string))
+                {
+                    prop.SetValue(record, reader.GetString(i));
+                }
+
+                if (propertyType == typeof(bool))
+                {
+                    prop.SetValue(record, reader.GetBoolean(i));
+                }
+
+                if (propertyType == typeof(DateTime))
+                {
+                    prop.SetValue(record, reader.GetDateTime(i));
+                }
+                i++;
+            }
+            return record;
+        }
+
         public IEnumerable<T> Select<T>(string param = null, object value = null)
         {
             var type = typeof(T);
@@ -133,7 +169,14 @@ namespace PSNBot.Services
             sb.Append(type.Name);
             if (param != null)
             {
-                sb.Append(string.Format(" WHERE {0} = @param", param));
+                if (value is string)
+                {
+                    sb.Append(string.Format(" WHERE UPPER({0}) = UPPER(@param) ", param));
+                }
+                else
+                {
+                    sb.Append(string.Format(" WHERE {0} = @param ", param));
+                }
             }
             sb.Append(";");
 
@@ -141,50 +184,54 @@ namespace PSNBot.Services
             {
                 connection.Open();
                 var command = new SQLiteCommand(sb.ToString(), connection);
-
                 if (param != null)
                 {
                     command.Parameters.Add(new SQLiteParameter("param", value));
                 }
-
-                var reader = command.ExecuteReader();
-
-                while (reader.Read())
+                using (var reader = command.ExecuteReader())
                 {
-                    var record = (T)Activator.CreateInstance(type);
-
-                    int i = 0;
-                    foreach (var prop in props)
+                    while (reader.Read())
                     {
-                        var propertyType = prop.PropertyType;
-
-                        if (propertyType == typeof(long))
-                        {
-                            prop.SetValue(record, reader.GetInt64(i));
-                        }
-
-                        if (propertyType == typeof(string))
-                        {
-                            prop.SetValue(record, reader.GetString(i));
-                        }
-
-                        if (propertyType == typeof(bool))
-                        {
-                            prop.SetValue(record, reader.GetBoolean(i));
-                        }
-
-                        if (propertyType == typeof(DateTime))
-                        {
-                            prop.SetValue(record, reader.GetDateTime(i));
-                        }
-                        i++;
+                        yield return Map<T>(reader);
                     }
-                    yield return record;
                 }
                 connection.Close();
             }
         }
 
+        public IEnumerable<T> Search<T>(string text)
+        {
+            var type = typeof(T);
+            var props = type.GetProperties().Where(p => p.PropertyType == typeof(string));
+
+            var sb = new StringBuilder();
+            sb.Append("SELECT * FROM ");
+            sb.Append(type.Name);
+            if (props.Any())
+            {
+                sb.Append(" WHERE ");
+                sb.Append(string.Join(" OR ", props.Select(p => string.Format("UPPER({0}) LIKE UPPER(@{1}) ESCAPE '\\'", p.Name, p.Name))));
+            }
+            sb.Append(";");
+
+            using (var connection = GetConnection())
+            {
+                connection.Open();
+                var command = new SQLiteCommand(sb.ToString(), connection);
+                foreach (var prop in props)
+                {
+                    command.Parameters.Add(new SQLiteParameter(prop.Name, string.Format("%{0}%", text.Replace("%", "\\%").Replace("_", "\\_"))));
+                }
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        yield return Map<T>(reader);
+                    }
+                }
+                connection.Close();
+            }
+        }
 
         private string GetDbType(Type propertyType)
         {

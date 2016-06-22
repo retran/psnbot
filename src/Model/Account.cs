@@ -13,6 +13,6 @@ namespace PSNBot.Model
         public string PSNName { get; set; }
         public string Interests { get; set; }
         public bool ShowTrophies { get; set; }
-        public bool Confirmed { get; set; }
+        public long Status { get; set; }
     }
 }

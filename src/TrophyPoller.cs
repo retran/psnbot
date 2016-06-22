@@ -44,7 +44,7 @@ namespace PSNBot
                 {
                     DateTime lastTimeStamp = LoadTimeStamp(".timestamp");
                     _lastCheckDateTime = dt;
-                    var trophies = await _psnService.GetTrophies(_accounts.GetAllActive());
+                    var trophies = await _psnService.GetTrophies(_accounts.GetAllWithShowTrophies());
                     foreach (var ach in trophies.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
                     {
                         lastTimeStamp = ach.TimeStamp;
@@ -102,7 +102,7 @@ namespace PSNBot
             var timestamp = _databaseService.Select<TimeStamp>("id", id).FirstOrDefault();
             if (timestamp != null)
             {
-                return timestamp.Stamp;
+                return timestamp.Stamp.ToUniversalTime();
             }
 
             return DateTime.UtcNow;

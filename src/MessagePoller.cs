@@ -79,14 +79,34 @@ namespace PSNBot
                 await _client.SendMessage(new SendMessageQuery()
                 {
                     ChatId = message.Chat.Id,
+                    ReplyToMessageId = message.MessageId,
                     Text = Messages.GetWelcomeMessage(message.NewChatMember)
                 });
                 return;
             }
+
+            message.Text = message.Text.ToLower();
+            if (message.Chat.Type != "private" && !message.Text.Contains("@clankbot"))
+            {
+                return;
+            }
+
+            message.Text = message.Text.Replace("@clankbot", "");
             
             var command = _commands.FirstOrDefault(c => c.IsApplicable(message));
             if (command != null)
             {
+                if (command.IsPrivateOnly() && message.Chat.Type != "private")
+                {
+                    await _client.SendMessage(new SendMessageQuery()
+                    {
+                        ChatId = message.Chat.Id,
+                        ReplyToMessageId = message.MessageId,
+                        Text = Messages.PrivateOnlyCommand
+                    });
+
+                    return;
+                }
                 await command.Handle(message);
             }
         }
