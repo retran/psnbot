@@ -47,7 +47,6 @@ namespace PSNBot.Services
 
                 return new TrophyEntry[] { };
             }).ToArray();
-
             return (await Task.WhenAll(tasks)).SelectMany(_ => _);
         }
 
@@ -55,7 +54,7 @@ namespace PSNBot.Services
         {
             return await _friendManager.SendFriendRequest(psnId, Messages.FriendRequestMessage, _userAccountEntity);
         }
-        
+
         public async Task<UserEntry> GetUser(string psnId)
         {
             try
@@ -68,30 +67,26 @@ namespace PSNBot.Services
             }
         }
 
-        // TODO make async
-        public IEnumerable<ImageMessage> GetMessages(DateTime timestamp)
+        public async Task<IEnumerable<ImageMessage>> GetMessages(DateTime timestamp)
         {
-            var result = new List<ImageMessage>();
-
-            var messageGroup = _messageManager.GetMessageGroup(_userAccountEntity.Entity.OnlineId, _userAccountEntity);
-            messageGroup.Wait();
-
-
-            foreach (var mg in messageGroup.Result.MessageGroups)
+            var groups = await _messageManager.GetMessageGroup(_userAccountEntity.Entity.OnlineId, _userAccountEntity);
+            if (groups == null || groups.MessageGroups == null || !groups.MessageGroups.Any())
             {
+                return new ImageMessage[] { };
+            }
+            var tasks = groups.MessageGroups.AsParallel().Select(async mg =>
+            {
+                var result = new List<ImageMessage>();
                 var id = mg.MessageGroupId;
-                var conversation = _messageManager.GetGroupConversation(id, _userAccountEntity);
-                conversation.Wait();
-
-                foreach (var msg in conversation.Result.messages.Where(m => m.contentKeys.Any(k => string.Equals(k, "image-data-0", StringComparison.OrdinalIgnoreCase))))
+                var conversation = await _messageManager.GetGroupConversation(id, _userAccountEntity);
+                foreach (var msg in conversation.messages.Where(m => m.contentKeys.Any(k => string.Equals(k, "image-data-0", StringComparison.OrdinalIgnoreCase))))
                 {
                     var date = DateTime.Parse(msg.receivedDate, CultureInfo.InvariantCulture).ToUniversalTime();
                     if (date > timestamp)
                     {
-                        var image = _messageManager.GetImageMessageContent(id, msg, _userAccountEntity);
-                        image.Wait();
-                        byte[] data = new byte[image.Result.Length];
-                        image.Result.Read(data, 0, (int)image.Result.Length);
+                        var image = await _messageManager.GetImageMessageContent(id, msg, _userAccountEntity);
+                        byte[] data = new byte[image.Length];
+                        image.Read(data, 0, (int)image.Length);
                         result.Add(new ImageMessage()
                         {
                             Data = data,
@@ -100,8 +95,9 @@ namespace PSNBot.Services
                         });
                     }
                 }
-            }
-            return result;
+                return result;
+            }).ToArray();
+            return (await Task.WhenAll(tasks)).SelectMany(_ => _);
         }
 
         private static IEnumerable<TrophyEntry> GetTrophiesImpl(List<RecentActivityEntity.Feed> feed, Account account)

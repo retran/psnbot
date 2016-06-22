@@ -23,8 +23,12 @@ namespace PSNBot
             Console.OutputEncoding = System.Text.Encoding.Unicode;
 
             using (var poller = new MessagePoller(telegramClient, client))
+            using (var imagePoller = new ImagePoller(telegramClient, client))
+            using (var trophyPoller = new TrophyPoller(telegramClient, client))
             {
                 poller.Start();
+                imagePoller.Start();
+                trophyPoller.Start();
                 Console.ReadKey();
             }
         }

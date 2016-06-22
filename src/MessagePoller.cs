@@ -31,34 +31,39 @@ namespace PSNBot
             _accounts = new AccountManager();
         }
 
+        private async Task PollTelegram()
+        {
+            var updates = await _client.GetUpdates(new GetUpdatesQuery()
+            {
+                Offset = _offset
+            });
+
+            if (updates.Result.Any())
+            {
+                _offset = updates.Result.Last().UpdateId + 1;
+            }
+
+            foreach (var update in updates.Result)
+            {
+                if (update.Message != null && !string.IsNullOrEmpty(update.Message.Text))
+                {
+                    Trace.WriteLine(string.Format("{0}\t{1}\t{2}", DateTime.Now, update.Message.From.Username, update.Message.Text));
+                    Handle(update.Message);
+                }
+            }
+        }
+
         private async Task Poll()
         {
+            await PollTelegram();
+
             try
             {
-                var updates = await _client.GetUpdates(new GetUpdatesQuery()
-                {
-                    Offset = _offset
-                });
-
-                if (updates.Result.Any())
-                {
-                    _offset = updates.Result.Last().UpdateId + 1;
-                }
-
-                foreach (var update in updates.Result)
-                {
-                    if (update.Message != null && !string.IsNullOrEmpty(update.Message.Text))
-                    {
-                        Trace.WriteLine(string.Format("{0}\t{1}\t{2}", DateTime.Now, update.Message.From.Username, update.Message.Text));
-                        Handle(update.Message);
-                    }
-                }
-
                 var dt = DateTime.Now;
                 if ((dt - _lastCheckDateTime).TotalSeconds > 60)
                 {
                     DateTime lastPhotoTimeStamp = LoadTimeStamp(".phototimestamp");
-                    var msgs = _psnService.GetMessages(lastPhotoTimeStamp).OrderBy(m => m.TimeStamp);
+                    var msgs = (await _psnService.GetMessages(lastPhotoTimeStamp)).OrderBy(m => m.TimeStamp);
                     foreach (var msg in msgs)
                     {
                         var account = _accounts.GetByPSN(msg.Source);
@@ -84,7 +89,6 @@ namespace PSNBot
                             lastPhotoTimeStamp = msg.TimeStamp;
                         }
                     }
-
                     SaveTimeStamp(lastPhotoTimeStamp, ".phototimestamp");
 
                     DateTime lastTimeStamp = LoadTimeStamp(".timestamp");
