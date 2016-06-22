@@ -74,15 +74,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AccountManager.cs" />
     <Compile Include="AchievementEntry.cs" />
     <Compile Include="Commands\Command.cs" />
     <Compile Include="Commands\ListCommand.cs" />
     <Compile Include="Commands\SearchCommand.cs" />
     <Compile Include="Commands\TopCommand.cs" />
+    <Compile Include="Model\TimeStamp.cs" />
+    <Compile Include="Services\DatabaseService.cs" />
     <Compile Include="ImagePoller.cs" />
     <Compile Include="MessagePoller.cs" />
     <Compile Include="Messages.cs" />
+    <Compile Include="Model\Account.cs" />
     <Compile Include="Model\ImageMessage.cs" />
     <Compile Include="Model\TrophyEntry.cs" />
     <Compile Include="Program.cs" />

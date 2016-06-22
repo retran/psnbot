@@ -69,38 +69,45 @@ namespace PSNBot.Services
 
         public async Task<IEnumerable<Image>> GetImages(DateTime timestamp)
         {
-            var groups = await _messageManager.GetMessageGroup(_userAccountEntity.Entity.OnlineId, _userAccountEntity);
-            if (groups == null || groups.MessageGroups == null || !groups.MessageGroups.Any())
+            try
+            {
+                var groups = await _messageManager.GetMessageGroup(_userAccountEntity.Entity.OnlineId, _userAccountEntity);
+                if (groups == null || groups.MessageGroups == null || !groups.MessageGroups.Any())
+                {
+                    return new Image[] { };
+                }
+                var tasks = groups.MessageGroups.AsParallel().Select(async mg =>
+                {
+                    var result = new List<Image>();
+                    var id = mg.MessageGroupId;
+                    var conversation = await _messageManager.GetGroupConversation(id, _userAccountEntity);
+                    if (conversation.messages != null)
+                    {
+                        foreach (var msg in conversation.messages.Where(m => m.contentKeys.Any(k => string.Equals(k, "image-data-0", StringComparison.OrdinalIgnoreCase))))
+                        {
+                            var date = DateTime.Parse(msg.receivedDate, CultureInfo.InvariantCulture).ToUniversalTime();
+                            if (date > timestamp)
+                            {
+                                var image = await _messageManager.GetImageMessageContent(id, msg, _userAccountEntity);
+                                byte[] data = new byte[image.Length];
+                                image.Read(data, 0, (int)image.Length);
+                                result.Add(new Image()
+                                {
+                                    Data = data,
+                                    Source = msg.senderOnlineId,
+                                    TimeStamp = date
+                                });
+                            }
+                        }
+                    }
+                    return result;
+                }).ToArray();
+                return (await Task.WhenAll(tasks)).SelectMany(_ => _);
+            }
+            catch
             {
                 return new Image[] { };
             }
-            var tasks = groups.MessageGroups.AsParallel().Select(async mg =>
-            {
-                var result = new List<Image>();
-                var id = mg.MessageGroupId;
-                var conversation = await _messageManager.GetGroupConversation(id, _userAccountEntity);
-                if (conversation.messages != null)
-                {
-                    foreach (var msg in conversation.messages.Where(m => m.contentKeys.Any(k => string.Equals(k, "image-data-0", StringComparison.OrdinalIgnoreCase))))
-                    {
-                        var date = DateTime.Parse(msg.receivedDate, CultureInfo.InvariantCulture).ToUniversalTime();
-                        if (date > timestamp)
-                        {
-                            var image = await _messageManager.GetImageMessageContent(id, msg, _userAccountEntity);
-                            byte[] data = new byte[image.Length];
-                            image.Read(data, 0, (int)image.Length);
-                            result.Add(new Image()
-                            {
-                                Data = data,
-                                Source = msg.senderOnlineId,
-                                TimeStamp = date
-                            });
-                        }
-                    }
-                }
-                return result;
-            }).ToArray();
-            return (await Task.WhenAll(tasks)).SelectMany(_ => _);
         }
 
         private static IEnumerable<TrophyEntry> GetTrophiesImpl(List<RecentActivityEntity.Feed> feed, Account account)

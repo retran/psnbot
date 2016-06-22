@@ -11,6 +11,7 @@ using System.Text;
 using System.Collections.Generic;
 using PsnLib.Entities;
 using PSNBot.Services;
+using PSNBot.Model;
 
 namespace PSNBot
 {
@@ -20,16 +21,18 @@ namespace PSNBot
         private CancellationTokenSource _cancellationTokenSource;
         private bool _disposed = false;
         private PSNService _psnService;
-        private AccountManager _accounts;
+        private AccountService _accounts;
         private DateTime _lastCheckDateTime = DateTime.Now;
         private long _chatId;
+        private DatabaseService _databaseService;
 
-        public ImagePoller(TelegramClient telegramClient, PSNService psnService, AccountManager accounts, long chatId)
+        public ImagePoller(DatabaseService databaseService, TelegramClient telegramClient, PSNService psnService, AccountService accounts, long chatId)
         {
             _chatId = chatId;
             _telegramClient = telegramClient;
             _psnService = psnService;
             _accounts = accounts;
+            _databaseService = databaseService;
         }
 
         private async Task Poll()
@@ -72,24 +75,21 @@ namespace PSNBot
             }
         }
 
-        private void SaveTimeStamp(DateTime stamp, string filename)
+        private void SaveTimeStamp(DateTime stamp, string id)
         {
-            using (var sw = new StreamWriter(filename))
+            _databaseService.Upsert<TimeStamp>(new TimeStamp()
             {
-                sw.Write(stamp.ToString(CultureInfo.InvariantCulture));
-                sw.Flush();
-            }
+                Id = id,
+                Stamp = stamp
+            });
         }
 
-        private DateTime LoadTimeStamp(string filename)
+        private DateTime LoadTimeStamp(string id)
         {
-            if (File.Exists(filename))
+            var timestamp = _databaseService.Select<TimeStamp>("id", id).FirstOrDefault();
+            if (timestamp != null)
             {
-                using (var sr = new StreamReader(filename))
-                {
-                    var line = sr.ReadLine();
-                    return DateTime.Parse(line, CultureInfo.InvariantCulture);
-                }
+                return timestamp.Stamp;
             }
 
             return DateTime.UtcNow;

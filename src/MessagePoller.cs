@@ -22,17 +22,19 @@ namespace PSNBot
         private CancellationTokenSource _cancellationTokenSource;
         private bool _disposed = false;
         private PSNService _psnService;
-        private AccountManager _accounts;
+        private AccountService _accounts;
         private DateTime _lastCheckDateTime = DateTime.Now;
         private IEnumerable<Command> _commands;
         private long _chatId;
+        private DatabaseService _databaseService;
 
-        public MessagePoller(TelegramClient client, PSNService psnService, AccountManager accounts, long chatId)
+        public MessagePoller(DatabaseService databaseService, TelegramClient client, PSNService psnService, AccountService accounts, long chatId)
         {
             _chatId = chatId;
             _client = client;
             _psnService = psnService;
             _accounts = accounts;
+            _databaseService = databaseService;
 
             _commands = new Command[]
             {
@@ -65,12 +67,12 @@ namespace PSNBot
 
         private async void Handle(Message message)
         {
-            var acc = _accounts.GetById(message.From.Id);
-            if (acc != null && acc.TelegramName != message.From.Username)
-            {
-                acc.TelegramName = message.From.Username;
-                _accounts.Persist();
-            }
+            //var acc = _accounts.GetById(message.From.Id);
+            //if (acc != null && acc.TelegramName != message.From.Username)
+            //{
+            //    acc.TelegramName = message.From.Username;
+            //    _accounts.Persist();
+            //}
 
             if (message.NewChatMember != null)
             {
@@ -86,125 +88,6 @@ namespace PSNBot
             if (command != null)
             {
                 await command.Handle(message);
-            }
-
-            if (message.Text.StartsWith("/register@clankbot", StringComparison.OrdinalIgnoreCase))
-            {
-                var splitted = message.Text.Split(' ');
-                if (splitted.Length > 1)
-                {
-                    if (_accounts.GetById(message.From.Id) == null && _accounts.GetByPSN(splitted[1].Trim()) == null)
-                    {
-                        var success = await _psnService.SendFriendRequest(splitted[1].Trim());
-                        if (success)
-                        {
-                            _accounts.Register(message.From.Id, message.From.Username, splitted[1].Trim());
-                            await _client.SendMessage(new SendMessageQuery()
-                            {
-                                ChatId = message.Chat.Id,
-                                ReplyToMessageId = message.MessageId,
-                                Text = "Ты успешно зарегистрирован. Добавь меня в PSN, пожалуйста."
-                            });
-                        }
-                        else
-                        {
-                            await _client.SendMessage(new SendMessageQuery()
-                            {
-                                ChatId = message.Chat.Id,
-                                ReplyToMessageId = message.MessageId,
-                                Text = "Не могу найти тебя в PSN."
-                            });
-                        }
-                    }
-                    else
-                    {
-                        await _client.SendMessage(new SendMessageQuery()
-                        {
-                            ChatId = message.Chat.Id,
-                            ReplyToMessageId = message.MessageId,
-                            Text = "Я тебя уже добавил."
-                        });
-                    }
-                }
-                else
-                {
-                    await _client.SendMessage(new SendMessageQuery()
-                    {
-                        ChatId = message.Chat.Id,
-                        ReplyToMessageId = message.MessageId,
-                        Text = "Укажи свой идентификатор в PSN (например, так: /register@clankbot <your psn id>)."
-                    });
-                }
-            }
-
-            if (message.Text.StartsWith("/start@clankbot", StringComparison.OrdinalIgnoreCase))
-            {
-                if (_accounts.GetById(message.From.Id) != null)
-                {
-                    _accounts.Start(message.From.Id, message.Chat.Id);
-                    await _client.SendMessage(new SendMessageQuery()
-                    {
-                        ChatId = message.Chat.Id,
-                        ReplyToMessageId = message.MessageId,
-                        Text = "Начинаю трансляцию призов."
-                    });
-                }
-                else
-                {
-                    await _client.SendMessage(new SendMessageQuery()
-                    {
-                        ChatId = message.Chat.Id,
-                        ReplyToMessageId = message.MessageId,
-                        Text = "Сначала зарегистрируйся."
-                    });
-                }
-            }
-
-            if (message.Text.StartsWith("/setinterests@clankbot", StringComparison.OrdinalIgnoreCase))
-            {
-                if (_accounts.GetById(message.From.Id) != null)
-                {
-                    var interests = message.Text.Remove(0, "/setinterests@clankbot".Length).Trim();
-                    _accounts.SetInterests(message.From.Id, interests);
-                    await _client.SendMessage(new SendMessageQuery()
-                    {
-                        ChatId = message.Chat.Id,
-                        ReplyToMessageId = message.MessageId,
-                        Text = "Интересы сохранены."
-                    });
-                }
-                else
-                {
-                    await _client.SendMessage(new SendMessageQuery()
-                    {
-                        ChatId = message.Chat.Id,
-                        ReplyToMessageId = message.MessageId,
-                        Text = "Сначала зарегистрируйся."
-                    });
-                }
-            }
-
-            if (message.Text.StartsWith("/stop@clankbot", StringComparison.OrdinalIgnoreCase))
-            {
-                if (_accounts.GetById(message.From.Id) != null)
-                {
-                    _accounts.Stop(message.From.Id, message.Chat.Id);
-                    await _client.SendMessage(new SendMessageQuery()
-                    {
-                        ChatId = message.Chat.Id,
-                        ReplyToMessageId = message.MessageId,
-                        Text = "Останавливаю трансляцию призов."
-                    });
-                }
-                else
-                {
-                    await _client.SendMessage(new SendMessageQuery()
-                    {
-                        ChatId = message.Chat.Id,
-                        ReplyToMessageId = message.MessageId,
-                        Text = "Сначала зарегистрируйся."
-                    });
-                }
             }
         }
 

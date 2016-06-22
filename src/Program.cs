@@ -23,12 +23,15 @@ namespace PSNBot
             task.Wait();
 
             var telegramClient = new Telegram.TelegramClient("");
-            var accounts = new AccountManager();
+            var database = new DatabaseService("psnbot.sqlite");
+
+            var accounts = new AccountService(database);
+
             Console.OutputEncoding = System.Text.Encoding.Unicode;
 
-            using (var poller = new MessagePoller(telegramClient, client, accounts, -120625429))
-            using (var imagePoller = new ImagePoller(telegramClient, client, accounts, -120625429))
-            using (var trophyPoller = new TrophyPoller(telegramClient, client, accounts, -120625429))
+            using (var poller = new MessagePoller(database, telegramClient, client, accounts, -120625429))
+            using (var imagePoller = new ImagePoller(database, telegramClient, client, accounts, -120625429))
+            using (var trophyPoller = new TrophyPoller(database, telegramClient, client, accounts, -120625429))
             {
                 poller.Start();
                 imagePoller.Start();

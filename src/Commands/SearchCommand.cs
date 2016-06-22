@@ -15,9 +15,9 @@ namespace PSNBot.Commands
         private Regex _regex;
         private PSNService _psnService;
         private TelegramClient _telegramClient;
-        private AccountManager _accounts;
+        private AccountService _accounts;
 
-        public SearchCommand(PSNService psnService, TelegramClient telegramClient, AccountManager accounts)
+        public SearchCommand(PSNService psnService, TelegramClient telegramClient, AccountService accounts)
         {
             _psnService = psnService;
             _telegramClient = telegramClient;
