@@ -334,7 +334,34 @@ namespace PSNBot
 
                 foreach (var line in lines)
                 {
-                    sb.Append(line.Result);
+                    if (sb.Length + line.Result.Length < 4096)
+                    {
+                        sb.Append(line.Result);
+                    }
+                    else
+                    {
+                        if (string.IsNullOrEmpty(interests))
+                        {
+                            await _client.SendMessage(new SendMessageQuery()
+                            {
+                                ChatId = message.From.Id,
+                                Text = sb.ToString(),
+                                ParseMode = "HTML",
+                            });
+                        }
+                        else
+                        {
+                            await _client.SendMessage(new SendMessageQuery()
+                            {
+                                ChatId = message.Chat.Id,
+                                ReplyToMessageId = message.MessageId,
+                                Text = sb.ToString(),
+                                ParseMode = "HTML",
+                            });
+                        }
+                        sb.Clear();
+                        sb.Append(line.Result);
+                    }
                 }
 
                 if (string.IsNullOrEmpty(interests))
