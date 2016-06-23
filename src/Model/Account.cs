@@ -6,7 +6,15 @@ using System.Threading.Tasks;
 
 namespace PSNBot.Model
 {
-    public class Account
+    public static class Status
+    {
+        public const long AwaitingPSNName = 0;
+        public const long AwaitingFriendRequest = 1;
+        public const long AwaitingInterests = 2;
+
+        public const long Ok = 1024;
+    }
+        public class Account
     {
         public long Id { get; set; }
         public string TelegramName { get; set; }

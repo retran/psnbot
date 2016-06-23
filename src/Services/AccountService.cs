@@ -1,20 +1,16 @@
 ﻿using PSNBot.Model;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 
 namespace PSNBot.Services
 {
     public class AccountService
     {
-        private List<Account> _accounts;
         private DatabaseService _databaseService;
 
         public AccountService(DatabaseService databaseService)
         {
-            _accounts = new List<Account>();
             _databaseService = databaseService;
         }
 
@@ -30,17 +26,49 @@ namespace PSNBot.Services
 
         public IEnumerable<Account> GetAllWithShowTrophies()
         {
-            return _databaseService.Select<Account>("ShowTrophies", true);
+            return _databaseService.Select<Account>("ShowTrophies", true).ToArray();
         }
 
         public IEnumerable<Account> GetAll()
         {
-            return _databaseService.Select<Account>();
+            return _databaseService.Select<Account>().ToArray();
         }
 
         public IEnumerable<Account> Search(string text)
         {
-            return _databaseService.Search<Account>(text);
+            return _databaseService.Search<Account>(text).ToArray();
+        }
+
+        public void Delete(Account account)
+        {
+            _databaseService.Delete(account);
+        }
+
+        public Account Create(long id, string username)
+        {
+            var account = new Account()
+            {
+                Id = id,
+                TelegramName = username,
+                ShowTrophies = false,
+                Status = Status.AwaitingPSNName,
+                Interests = string.Empty,
+                PSNName = string.Empty
+            };
+
+            _databaseService.Insert(account);
+
+            return account;
+        }
+
+        public IEnumerable<Account> GetAllAwaitingFriendRequest()
+        {
+            return _databaseService.Select<Account>("Status", Status.AwaitingFriendRequest).ToArray();
+        }
+
+        public void Update(Account account)
+        {
+            _databaseService.Update(account);
         }
     }
 }

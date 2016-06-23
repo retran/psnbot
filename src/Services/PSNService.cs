@@ -50,6 +50,17 @@ namespace PSNBot.Services
             return (await Task.WhenAll(tasks)).SelectMany(_ => _);
         }
 
+        public async Task<bool> CheckFriend(string pSNName)
+        {
+            var list = await _friendManager.GetFriendsList(_userAccountEntity.Entity.OnlineId, 0, false, false, false, true, false, false, false, _userAccountEntity);
+            return list.FriendList != null && list.FriendList.Any(f => string.Equals(f.OnlineId, pSNName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public async Task<bool> RemoveFriend(string psnName)
+        {
+            return await _friendManager.DeleteFriend(psnName, _userAccountEntity);
+        }
+
         public async Task<bool> SendFriendRequest(string psnId)
         {
             return await _friendManager.SendFriendRequest(psnId, Messages.FriendRequestMessage, _userAccountEntity);

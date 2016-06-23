@@ -5,13 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using PSNBot.Telegram;
 using System.Net;
-using System.IO;
-using System.Globalization;
-using System.Text;
-using System.Collections.Generic;
-using PsnLib.Entities;
 using PSNBot.Services;
-using PSNBot.Model;
 
 namespace PSNBot
 {
@@ -24,15 +18,15 @@ namespace PSNBot
         private AccountService _accounts;
         private DateTime _lastCheckDateTime = DateTime.Now;
         private long _chatId;
-        private DatabaseService _databaseService;
+        private TimeStampService _timestampService;
 
-        public TrophyPoller(DatabaseService databaseService, TelegramClient telegramClient, PSNService psnService, AccountService accounts, long chatId)
+        public TrophyPoller(TelegramClient telegramClient, PSNService psnService, AccountService accounts, TimeStampService timestampService, long chatId)
         {
             _chatId = chatId;
             _telegramClient = telegramClient;
             _psnService = psnService;
             _accounts = accounts;
-            _databaseService = databaseService;
+            _timestampService = timestampService;
         }
 
         private async Task Poll()
@@ -42,7 +36,7 @@ namespace PSNBot
                 var dt = DateTime.Now;
                 if ((dt - _lastCheckDateTime).TotalSeconds > 60)
                 {
-                    DateTime lastTimeStamp = LoadTimeStamp(".timestamp");
+                    DateTime lastTimeStamp = _timestampService.Get(".timestamp");
                     _lastCheckDateTime = dt;
                     var trophies = await _psnService.GetTrophies(_accounts.GetAllWithShowTrophies());
                     foreach (var ach in trophies.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
@@ -79,33 +73,13 @@ namespace PSNBot
                         });
                         Thread.Sleep(1000);
                     }
-                    SaveTimeStamp(lastTimeStamp, ".timestamp");
+                    _timestampService.Set(".timestamp", lastTimeStamp);
                 }
             }
             catch (Exception e)
             {
                 Trace.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
             }
-        }
-
-        private void SaveTimeStamp(DateTime stamp, string id)
-        {
-            _databaseService.Upsert<TimeStamp>(new TimeStamp()
-            {
-                Id = id,
-                Stamp = stamp
-            });
-        }
-
-        private DateTime LoadTimeStamp(string id)
-        {
-            var timestamp = _databaseService.Select<TimeStamp>("id", id).FirstOrDefault();
-            if (timestamp != null)
-            {
-                return timestamp.Stamp.ToUniversalTime();
-            }
-
-            return DateTime.UtcNow;
         }
 
         public void Start()

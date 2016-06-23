@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using PsnLib.Entities;
 using System.Net;
 using PSNBot.Services;
+using PSNBot.Process;
 
 namespace PSNBot
 {
@@ -18,6 +19,8 @@ namespace PSNBot
     {
         static void Main(string[] args)
         {
+            Console.OutputEncoding = System.Text.Encoding.Unicode;
+
             var client = new PSNService();
             var task = client.Login("retran@tolkien.ru", "");
             task.Wait();
@@ -26,16 +29,19 @@ namespace PSNBot
             var database = new DatabaseService("../psnbot.sqlite");
 
             var accounts = new AccountService(database);
+            var timestampService = new TimeStampService(database);
 
-            Console.OutputEncoding = System.Text.Encoding.Unicode;
+            var registrationProcess = new RegistrationProcess(telegramClient, client, accounts);
 
-            using (var poller = new MessagePoller(database, telegramClient, client, accounts, -120625429))
-            using (var imagePoller = new ImagePoller(database, telegramClient, client, accounts, -120625429))
-            using (var trophyPoller = new TrophyPoller(database, telegramClient, client, accounts, -120625429))
+            using (var poller = new MessagePoller(database, telegramClient, client, accounts, registrationProcess, -120625429))
+            using (var imagePoller = new ImagePoller(telegramClient, client, accounts, timestampService, - 120625429))
+            using (var trophyPoller = new TrophyPoller(telegramClient, client, accounts, timestampService, -120625429))
+            using (var friendPoller = new FriendPoller(telegramClient, client, accounts, registrationProcess))
             {
                 poller.Start();
                 imagePoller.Start();
                 trophyPoller.Start();
+                friendPoller.Start();
                 Console.ReadKey();
             }
         }

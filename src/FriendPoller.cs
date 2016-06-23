@@ -1,21 +1,18 @@
-﻿using System;
+﻿using PSNBot.Model;
+using PSNBot.Process;
+using PSNBot.Services;
+using PSNBot.Telegram;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using PSNBot.Telegram;
-using System.Net;
-using System.IO;
-using System.Globalization;
-using System.Text;
-using System.Collections.Generic;
-using PsnLib.Entities;
-using PSNBot.Services;
-using PSNBot.Model;
 
 namespace PSNBot
 {
-    public class ImagePoller : IDisposable
+    public class FriendPoller : IDisposable
     {
         private TelegramClient _telegramClient;
         private CancellationTokenSource _cancellationTokenSource;
@@ -23,16 +20,14 @@ namespace PSNBot
         private PSNService _psnService;
         private AccountService _accounts;
         private DateTime _lastCheckDateTime = DateTime.Now;
-        private long _chatId;
-        private TimeStampService _timestampService;
+        private RegistrationProcess _registrationProcess;
 
-        public ImagePoller(TelegramClient telegramClient, PSNService psnService, AccountService accounts, TimeStampService timestampService, long chatId)
+        public FriendPoller(TelegramClient telegramClient, PSNService psnService, AccountService accounts, RegistrationProcess registrationProcess)
         {
-            _chatId = chatId;
             _telegramClient = telegramClient;
             _psnService = psnService;
             _accounts = accounts;
-            _timestampService = timestampService;
+            _registrationProcess = registrationProcess;
         }
 
         private async Task Poll()
@@ -40,33 +35,26 @@ namespace PSNBot
             try
             {
                 var dt = DateTime.Now;
-                if ((dt - _lastCheckDateTime).TotalSeconds > 60)
+                if ((dt - _lastCheckDateTime).TotalSeconds > 5)
                 {
-                    DateTime lastPhotoTimeStamp = _timestampService.Get(".phototimestamp");
-                    var msgs = (await _psnService.GetImages(lastPhotoTimeStamp)).OrderBy(m => m.TimeStamp);
-                    foreach (var msg in msgs)
+                    var accounts = _accounts.GetAllAwaitingFriendRequest();
+                    foreach (var account in accounts)
                     {
-                        var account = _accounts.GetByPSN(msg.Source);
-
-                        if (account != null)
+                        if (await _psnService.CheckFriend(account.PSNName))
                         {
-                            var tlgMsg = await _telegramClient.SendMessage(new Telegram.SendMessageQuery()
+                            account.Status = Status.AwaitingInterests;
+                            _accounts.Update(account);
+
+                            await _telegramClient.SendMessage(new SendMessageQuery()
                             {
-                                ChatId = _chatId,
-                                Text = string.Format("Пользователь <b>{0} ({1})</b> опубликовал изображение:", account.PSNName, account.TelegramName),
+                                ChatId = account.Id,
+                                Text = Messages.ConfirmedFriendRequest,
                                 ParseMode = "HTML",
                             });
 
-                            var message = await _telegramClient.SendPhoto(new Telegram.SendPhotoQuery()
-                            {
-                                ChatId = _chatId
-                            }, msg.Data);
-
-                            Thread.Sleep(1000);
-                        }
-                        lastPhotoTimeStamp = msg.TimeStamp;
+                            await _registrationProcess.SendCurrentStep(account);
+                        };
                     }
-                    _timestampService.Set(".phototimestamp", lastPhotoTimeStamp);
                 }
             }
             catch (Exception e)
@@ -110,7 +98,7 @@ namespace PSNBot
             }
         }
 
-        ~ImagePoller()
+        ~FriendPoller()
         {
             Dispose(false);
         }

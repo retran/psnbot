@@ -75,12 +75,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AchievementEntry.cs" />
     <Compile Include="Commands\Command.cs" />
+    <Compile Include="Commands\HelpCommand.cs" />
     <Compile Include="Commands\ListCommand.cs" />
+    <Compile Include="Commands\RulesCommand.cs" />
     <Compile Include="Commands\SearchCommand.cs" />
+    <Compile Include="Commands\StartCommand.cs" />
     <Compile Include="Commands\TopCommand.cs" />
+    <Compile Include="FriendPoller.cs" />
     <Compile Include="Model\TimeStamp.cs" />
+    <Compile Include="Process\RegistrationProcess.cs" />
     <Compile Include="Services\DatabaseService.cs" />
     <Compile Include="ImagePoller.cs" />
     <Compile Include="MessagePoller.cs" />
@@ -136,6 +140,7 @@
     <Compile Include="Services\AccountService.cs" />
     <Compile Include="Services\PSNService.cs" />
     <Compile Include="Model\UserEntry.cs" />
+    <Compile Include="Services\TimeStampService.cs" />
     <Compile Include="Telegram\Audio.cs" />
     <Compile Include="Telegram\CallbackQuery.cs" />
     <Compile Include="Telegram\Chat.cs" />

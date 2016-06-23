@@ -107,6 +107,26 @@ namespace PSNBot.Services
             }
         }
 
+        public void Delete<T>(T record)
+        {
+            var type = typeof(T);
+            var prop = type.GetProperties().FirstOrDefault(p => p.Name == "Id");
+
+            var sb = new StringBuilder();
+            sb.Append("DELETE FROM ");
+            sb.Append(type.Name);
+            sb.Append(" WHERE Id = @id");
+
+            using (var connection = GetConnection())
+            {
+                connection.Open();
+                var command = new SQLiteCommand(sb.ToString(), connection);
+                command.Parameters.Add(new SQLiteParameter(prop.Name, prop.GetValue(record)));
+                command.ExecuteNonQuery();
+                connection.Close();
+            }
+        }
+
         public void Upsert<T>(T record)
         {
             var type = typeof(T);

@@ -12,6 +12,8 @@ using System.Collections.Generic;
 using PsnLib.Entities;
 using PSNBot.Services;
 using PSNBot.Commands;
+using PSNBot.Process;
+using PSNBot.Model;
 
 namespace PSNBot
 {
@@ -27,20 +29,26 @@ namespace PSNBot
         private IEnumerable<Command> _commands;
         private long _chatId;
         private DatabaseService _databaseService;
+        private RegistrationProcess _registrationProcess;
 
-        public MessagePoller(DatabaseService databaseService, TelegramClient client, PSNService psnService, AccountService accounts, long chatId)
+        public MessagePoller(DatabaseService databaseService, TelegramClient client, PSNService psnService, AccountService accounts, 
+            RegistrationProcess registrationProcess, long chatId)
         {
             _chatId = chatId;
             _client = client;
             _psnService = psnService;
             _accounts = accounts;
             _databaseService = databaseService;
+            _registrationProcess = registrationProcess;
 
             _commands = new Command[]
             {
                 new TopCommand(_psnService, client, _accounts),
                 new SearchCommand(_psnService, client, _accounts),
-                new ListCommand(_psnService, client, _accounts)
+                new ListCommand(_psnService, client, _accounts),
+                new StartCommand(_psnService, client, _accounts, _registrationProcess),
+                new HelpCommand(_psnService, client, _accounts),
+                new RulesCommand(_psnService, client, _accounts)
             };
         }
 
@@ -67,7 +75,13 @@ namespace PSNBot
 
         private async void Handle(Message message)
         {
-            //var acc = _accounts.GetById(message.From.Id);
+            var account = _accounts.GetById(message.From.Id);
+            if (account != null && account.Status != Status.Ok)
+            {
+                await _registrationProcess.HandleCurrentStep(account, message);
+                return;
+            }
+
             //if (acc != null && acc.TelegramName != message.From.Username)
             //{
             //    acc.TelegramName = message.From.Username;
@@ -84,6 +98,7 @@ namespace PSNBot
                 });
                 return;
             }
+            
 
             message.Text = message.Text.ToLower();
             if (message.Chat.Type != "private" && !message.Text.Contains("@clankbot"))
