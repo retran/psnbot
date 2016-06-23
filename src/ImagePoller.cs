@@ -40,7 +40,7 @@ namespace PSNBot
             try
             {
                 var dt = DateTime.Now;
-                if ((dt - _lastCheckDateTime).TotalSeconds > 30)
+                if ((dt - _lastCheckDateTime).TotalSeconds > 60)
                 {
                     DateTime lastPhotoTimeStamp = LoadTimeStamp(".phototimestamp");
                     var msgs = (await _psnService.GetImages(lastPhotoTimeStamp)).OrderBy(m => m.TimeStamp);
