@@ -11,6 +11,7 @@ namespace PSNBot.Model
         public const long AwaitingPSNName = 0;
         public const long AwaitingFriendRequest = 1;
         public const long AwaitingInterests = 2;
+        public const long AwaitingTrophies = 3;
 
         public const long Ok = 1024;
     }

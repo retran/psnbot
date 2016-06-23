@@ -23,6 +23,10 @@ namespace PSNBot
         public static readonly string AwaitingFriendRequest = "Извини, я жду что ты добавишь меня в друзья в PSN.";
         public static readonly string ConfirmedFriendRequest = "Спасибо! Теперь мы друзья в PSN!";
         public static readonly string EndRegistration = "Поздравляю! Регистрация окончена. Используй команду /rules, чтобы прочесть правила, и команду /help, чтобы получить справку по командам.";
+        public static readonly string StartAwaitingTrophies = "Ты хочешь, чтобы твои призы появлялись в чате? Напиши \"да\" или \"нет\".";
+        public static readonly string YesOrNo = "Напиши \"да\" или \"нет\".";
+        public static readonly string ShowTrophiesYes = "Хорошо! Все увидят твои призы.";
+        public static readonly string ShowTrophiesNo = "Ладно. Твои призы не будут появляться в чате.";
 
         private static string GetName(User user)
         {

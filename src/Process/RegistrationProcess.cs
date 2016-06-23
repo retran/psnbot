@@ -70,7 +70,7 @@ namespace PSNBot.Process
 
                     case Status.AwaitingInterests:
                         account.Interests = text;
-                        account.Status = Status.Ok;
+                        account.Status = Status.AwaitingTrophies;
                         _accountService.Update(account);
 
                         await _telegramClient.SendMessage(new SendMessageQuery()
@@ -80,6 +80,33 @@ namespace PSNBot.Process
                             ParseMode = "HTML",
                         });
                         await SendCurrentStep(account);
+                        break;
+
+                    case Status.AwaitingTrophies:
+                        var value = text.ToLower();
+                        if (value == "да" || value == "нет")
+                        {
+                            account.Status = Status.Ok;
+                            account.ShowTrophies = value == "да";
+                            _accountService.Update(account);
+
+                            await _telegramClient.SendMessage(new SendMessageQuery()
+                            {
+                                ChatId = account.Id,
+                                Text = value == "да" ? Messages.ShowTrophiesYes : Messages.ShowTrophiesNo,
+                                ParseMode = "HTML",
+                            });
+                            await SendCurrentStep(account);
+                        }
+                        else
+                        {
+                            await _telegramClient.SendMessage(new SendMessageQuery()
+                            {
+                                ChatId = account.Id,
+                                Text = Messages.YesOrNo,
+                                ParseMode = "HTML",
+                            });
+                        }
                         break;
                 }
                 return true;
@@ -116,6 +143,14 @@ namespace PSNBot.Process
                     {
                         ChatId = account.Id,
                         Text = Messages.StartAwaitingInterests,
+                        ParseMode = "HTML",
+                    });
+                    break;
+                case Status.AwaitingTrophies:
+                    await _telegramClient.SendMessage(new SendMessageQuery()
+                    {
+                        ChatId = account.Id,
+                        Text = Messages.StartAwaitingTrophies,
                         ParseMode = "HTML",
                     });
                     break;
