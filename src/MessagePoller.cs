@@ -48,7 +48,8 @@ namespace PSNBot
                 new ListCommand(_psnService, client, _accounts),
                 new StartCommand(_psnService, client, _accounts, _registrationProcess),
                 new HelpCommand(_psnService, client, _accounts),
-                new RulesCommand(_psnService, client, _accounts)
+                new RulesCommand(_psnService, client, _accounts),
+                new DeleteCommand(_psnService, client, _accounts)
             };
         }
 
