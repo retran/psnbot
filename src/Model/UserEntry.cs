@@ -41,6 +41,8 @@ namespace PSNBot.Model
                         status += " (" + presence.PrimaryInfo.GameTitleInfo.TitleName + " - " + presence.PrimaryInfo.GameStatus + ")";
                     }
 
+                    status += "\nPS Plus: " + (user.Plus ? "да" : "нет");
+
                     if (presence.PrimaryInfo.LastOnlineDate != null)
                     {
                         status += "\nLast seen: " + DateTime.Parse(presence.PrimaryInfo.LastOnlineDate, CultureInfo.InvariantCulture).ToString(CultureInfo.GetCultureInfo("ru-RU"));

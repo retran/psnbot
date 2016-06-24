@@ -35,8 +35,9 @@ namespace PSNBot
             try
             {
                 var dt = DateTime.Now;
-                if ((dt - _lastCheckDateTime).TotalSeconds > 5)
+                if ((dt - _lastCheckDateTime).TotalSeconds > 30)
                 {
+                    _lastCheckDateTime = dt;
                     var accounts = _accounts.GetAllAwaitingFriendRequest();
                     foreach (var account in accounts)
                     {

@@ -52,7 +52,7 @@ namespace PSNBot.Services
 
         public async Task<bool> CheckFriend(string pSNName)
         {
-            var list = await _friendManager.GetFriendsList(_userAccountEntity.Entity.OnlineId, 0, false, false, false, true, false, false, false, _userAccountEntity);
+            var list = await _friendManager.GetFriendsList(_userAccountEntity.Entity.OnlineId, 1, false, false, false, true, false, false, false, _userAccountEntity);
             return list.FriendList != null && list.FriendList.Any(f => string.Equals(f.OnlineId, pSNName, StringComparison.OrdinalIgnoreCase));
         }
 

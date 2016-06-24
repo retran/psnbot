@@ -76,6 +76,11 @@ namespace PSNBot
 
         private async void Handle(Message message)
         {
+            if (message.From != null)
+            {
+                Console.WriteLine(string.Format("{0} {1}: {2}", DateTime.Now, message.From.Username, message.Text));
+            }
+
             var account = _accounts.GetById(message.From.Id);
             if (account != null && account.Status != Status.Ok)
             {
