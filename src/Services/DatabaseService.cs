@@ -1,7 +1,7 @@
 ﻿using PSNBot.Model;
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
+using Mono.Data.Sqlite;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -24,9 +24,9 @@ namespace PSNBot.Services
             }
         }
 
-        public SQLiteConnection GetConnection()
+		public SqliteConnection GetConnection()
         {
-            return new SQLiteConnection(string.Format("Data Source={0};Version=3;", _filename));
+			return new SqliteConnection(string.Format("Data Source={0};Version=3;", _filename));
         }
 
         private void CreateTable<T>()
@@ -45,7 +45,7 @@ namespace PSNBot.Services
             using (var connection = GetConnection())
             {
                 connection.Open();
-                var command = new SQLiteCommand(sb.ToString(), connection);
+				var command = new SqliteCommand(sb.ToString(), connection);
                 command.ExecuteNonQuery();
                 connection.Close();
             }
@@ -68,11 +68,11 @@ namespace PSNBot.Services
             using (var connection = GetConnection())
             {
                 connection.Open();
-                var command = new SQLiteCommand(sb.ToString(), connection);
+				var command = new SqliteCommand(sb.ToString(), connection);
 
                 foreach (var prop in props)
                 {
-                    command.Parameters.Add(new SQLiteParameter(prop.Name, prop.GetValue(record)));
+                    command.Parameters.Add(new SqliteParameter(prop.Name, prop.GetValue(record)));
                 }
 
                 command.ExecuteNonQuery();                
@@ -95,11 +95,11 @@ namespace PSNBot.Services
             using (var connection = GetConnection())
             {
                 connection.Open();
-                var command = new SQLiteCommand(sb.ToString(), connection);
+                var command = new SqliteCommand(sb.ToString(), connection);
 
                 foreach (var prop in props)
                 {
-                    command.Parameters.Add(new SQLiteParameter(prop.Name, prop.GetValue(record)));
+					command.Parameters.Add(new SqliteParameter(prop.Name, prop.GetValue(record)));
                 }
 
                 command.ExecuteNonQuery();
@@ -120,8 +120,8 @@ namespace PSNBot.Services
             using (var connection = GetConnection())
             {
                 connection.Open();
-                var command = new SQLiteCommand(sb.ToString(), connection);
-                command.Parameters.Add(new SQLiteParameter(prop.Name, prop.GetValue(record)));
+				var command = new SqliteCommand(sb.ToString(), connection);
+                command.Parameters.Add(new SqliteParameter(prop.Name, prop.GetValue(record)));
                 command.ExecuteNonQuery();
                 connection.Close();
             }
@@ -143,7 +143,7 @@ namespace PSNBot.Services
             }
         }
 
-        private T Map<T>(SQLiteDataReader reader)
+		private T Map<T>(SqliteDataReader reader)
         {
             var type = typeof(T);
             var props = type.GetProperties();
@@ -203,10 +203,10 @@ namespace PSNBot.Services
             using (var connection = GetConnection())
             {
                 connection.Open();
-                var command = new SQLiteCommand(sb.ToString(), connection);
+				var command = new SqliteCommand(sb.ToString(), connection);
                 if (param != null)
                 {
-                    command.Parameters.Add(new SQLiteParameter("param", value));
+                    command.Parameters.Add(new SqliteParameter("param", value));
                 }
                 using (var reader = command.ExecuteReader())
                 {
@@ -237,10 +237,10 @@ namespace PSNBot.Services
             using (var connection = GetConnection())
             {
                 connection.Open();
-                var command = new SQLiteCommand(sb.ToString(), connection);
+				var command = new SqliteCommand(sb.ToString(), connection);
                 foreach (var prop in props)
                 {
-                    command.Parameters.Add(new SQLiteParameter(prop.Name, string.Format("%{0}%", text.Replace("%", "\\%").Replace("_", "\\_"))));
+					command.Parameters.Add(new SqliteParameter(prop.Name, string.Format("%{0}%", text.Replace("%", "\\%").Replace("_", "\\_"))));
                 }
                 using (var reader = command.ExecuteReader())
                 {
@@ -305,7 +305,7 @@ namespace PSNBot.Services
 
         private void Initialize()
         {
-            SQLiteConnection.CreateFile(_filename);
+			SqliteConnection.CreateFile(_filename);
             CreateTable<Account>();
             CreateTable<TimeStamp>();
         }
