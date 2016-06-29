@@ -69,6 +69,7 @@ namespace PSNBot
                     }
                     _timestampService.Set(".phototimestamp", lastPhotoTimeStamp);
                 }
+                Thread.Sleep(10000);
             }
             catch (Exception e)
             {

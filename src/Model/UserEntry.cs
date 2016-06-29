@@ -48,15 +48,14 @@ namespace PSNBot.Model
                         status += "\nLast seen: " + DateTime.Parse(presence.PrimaryInfo.LastOnlineDate, CultureInfo.InvariantCulture).ToString(CultureInfo.GetCultureInfo("ru-RU"));
                     }
 
-                    if (user.trophySummary != null)
-                    {
-                        var trophies = user.trophySummary;
-                        status += string.Format("\n\nBronze: {0}\n", trophies.EarnedTrophies.Bronze);
-                        status += string.Format("Silver: {0}\n", trophies.EarnedTrophies.Silver);
-                        status += string.Format("Gold: {0}\n", trophies.EarnedTrophies.Gold);
-                        status += string.Format("Platinum: {0}\n", trophies.EarnedTrophies.Platinum);
-                        status += string.Format("\n<b>Rating: {0}</b>\n", GetRating());
-                    }
+                    //if (user.trophySummary != null)
+                    //{
+                    //    var trophies = user.trophySummary;
+                    //    status += string.Format("\n\nBronze: {0}\n", trophies.EarnedTrophies.Bronze);
+                    //    status += string.Format("Silver: {0}\n", trophies.EarnedTrophies.Silver);
+                    //    status += string.Format("Gold: {0}\n", trophies.EarnedTrophies.Gold);
+                    //    status += string.Format("Platinum: {0}", trophies.EarnedTrophies.Platinum);
+                    //}
 
                     return status;
                 }
@@ -66,6 +65,33 @@ namespace PSNBot.Model
             {
                 return null;
             }
+        }
+
+        public bool HasPlus()
+        {
+            return _userEntity.Plus;
+        }
+
+        public bool GetOnline()
+        {
+            return _userEntity.presence != null && _userEntity.presence.PrimaryInfo != null && _userEntity.presence.PrimaryInfo.OnlineStatus == "online";
+        }
+
+        public string GetStatusLine()
+        {
+            var presence = _userEntity.presence;
+
+            if (presence == null || presence.PrimaryInfo == null)
+            {
+                return string.Empty;
+            }
+
+            if (presence.PrimaryInfo.GameTitleInfo != null)
+            {
+                return  presence.PrimaryInfo.GameTitleInfo.TitleName + " - " + presence.PrimaryInfo.GameStatus;
+            }
+
+            return string.Empty;
         }
 
         public string GetTrophyLine()

@@ -3,10 +3,7 @@ using PSNBot.Process;
 using PSNBot.Services;
 using PSNBot.Telegram;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,7 +32,7 @@ namespace PSNBot
             try
             {
                 var dt = DateTime.Now;
-                if ((dt - _lastCheckDateTime).TotalSeconds > 30)
+                if ((dt - _lastCheckDateTime).TotalSeconds > 60)
                 {
                     _lastCheckDateTime = dt;
                     var accounts = _accounts.GetAllAwaitingFriendRequest();
@@ -54,9 +51,24 @@ namespace PSNBot
                             });
 
                             await _registrationProcess.SendCurrentStep(account);
+                            continue;
                         };
+
+                        if ((account.RegisteredAt + new TimeSpan(1, 0, 0)) < DateTime.Now.ToUniversalTime())
+                        {
+                            await _telegramClient.SendMessage(new SendMessageQuery()
+                            {
+                                ChatId = account.Id,
+                                Text = Messages.AwaitingFriendRequestAborted,
+                                ParseMode = "HTML",
+                            });
+
+                            await _psnService.RemoveFriend(account.PSNName);
+                            _accounts.Delete(account);
+                        }
                     }
                 }
+                Thread.Sleep(10000);
             }
             catch (Exception e)
             {

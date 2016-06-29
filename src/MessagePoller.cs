@@ -31,7 +31,7 @@ namespace PSNBot
         private DatabaseService _databaseService;
         private RegistrationProcess _registrationProcess;
 
-        public MessagePoller(DatabaseService databaseService, TelegramClient client, PSNService psnService, AccountService accounts, 
+        public MessagePoller(DatabaseService databaseService, TelegramClient client, PSNService psnService, AccountService accounts,
             RegistrationProcess registrationProcess, long chatId)
         {
             _chatId = chatId;
@@ -45,32 +45,42 @@ namespace PSNBot
             {
                 new TopCommand(_psnService, client, _accounts),
                 new SearchCommand(_psnService, client, _accounts),
-                new ListCommand(_psnService, client, _accounts),
+//                new ListCommand(_psnService, client, _accounts),
                 new StartCommand(_psnService, client, _accounts, _registrationProcess),
                 new HelpCommand(_psnService, client, _accounts),
                 new RulesCommand(_psnService, client, _accounts),
-                new DeleteCommand(_psnService, client, _accounts)
+                new OnlineCommand(_psnService, client, _accounts),
+                new DeleteCommand(_psnService, client, _accounts, _registrationProcess),
+                new SetInterestsCommand(_psnService, client, _accounts, _registrationProcess),
+                new SetTrophiesCommand(_psnService, client, _accounts, _registrationProcess),
             };
         }
 
         private async Task Poll()
         {
-            var updates = await _client.GetUpdates(new GetUpdatesQuery()
+            try
             {
-                Offset = _offset
-            });
-
-            if (updates.Result.Any())
-            {
-                _offset = updates.Result.Last().UpdateId + 1;
-            }
-
-            foreach (var update in updates.Result)
-            {
-                if (update.Message != null && (!string.IsNullOrEmpty(update.Message.Text) || update.Message.NewChatMember != null) && (update.Message.Chat.Id == _chatId || update.Message.Chat.Type == "private"))
+                var updates = await _client.GetUpdates(new GetUpdatesQuery()
                 {
-                    Handle(update.Message);
+                    Offset = _offset
+                });
+
+                if (updates.Result.Any())
+                {
+                    _offset = updates.Result.Last().UpdateId + 1;
                 }
+
+                foreach (var update in updates.Result)
+                {
+                    if (update.Message != null && (!string.IsNullOrEmpty(update.Message.Text) || update.Message.NewChatMember != null) && (update.Message.Chat.Id == _chatId || update.Message.Chat.Type == "private"))
+                    {
+                        Handle(update.Message);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
             }
         }
 
@@ -94,7 +104,7 @@ namespace PSNBot
             //    _accounts.Persist();
             //}
 
-            if (message.NewChatMember != null)
+            if (message.NewChatMember != null && account == null)
             {
                 await _client.SendMessage(new SendMessageQuery()
                 {
@@ -104,16 +114,21 @@ namespace PSNBot
                 });
                 return;
             }
-            
+
+            if (string.IsNullOrEmpty(message.Text))
+            {
+                return;
+            }
 
             message.Text = message.Text.ToLower();
+
             if (message.Chat.Type != "private" && !message.Text.Contains("@clankbot"))
             {
                 return;
             }
 
             message.Text = message.Text.Replace("@clankbot", "");
-            
+
             var command = _commands.FirstOrDefault(c => c.IsApplicable(message));
             if (command != null)
             {
@@ -142,6 +157,7 @@ namespace PSNBot
                 {
                     var task = Poll();
                     task.Wait();
+                    Thread.Sleep(1000);
                 }
             });
         }

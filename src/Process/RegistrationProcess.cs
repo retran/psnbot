@@ -27,6 +27,11 @@ namespace PSNBot.Process
             try
             {
                 var text = message.Text.Trim();
+                bool registration = false;
+                if (account.Status < Status.Ok)
+                {
+                    registration = true;
+                }
                 switch (account.Status)
                 {
                     case Status.AwaitingPSNName:
@@ -67,10 +72,10 @@ namespace PSNBot.Process
                         });
 
                         break;
-
                     case Status.AwaitingInterests:
+                    case Status.AwaitingNewInterests:
                         account.Interests = text;
-                        account.Status = Status.AwaitingTrophies;
+                        account.Status = registration ? Status.AwaitingTrophies : Status.Ok;
                         _accountService.Update(account);
 
                         await _telegramClient.SendMessage(new SendMessageQuery()
@@ -79,10 +84,13 @@ namespace PSNBot.Process
                             Text = Messages.SavedInterests,
                             ParseMode = "HTML",
                         });
-                        await SendCurrentStep(account);
+                        if (registration)
+                        {
+                            await SendCurrentStep(account);
+                        }
                         break;
-
                     case Status.AwaitingTrophies:
+                    case Status.AwaitingNewTrophies:
                         var value = text.ToLower();
                         if (value == "да" || value == "нет")
                         {
@@ -96,7 +104,10 @@ namespace PSNBot.Process
                                 Text = value == "да" ? Messages.ShowTrophiesYes : Messages.ShowTrophiesNo,
                                 ParseMode = "HTML",
                             });
-                            await SendCurrentStep(account);
+                            if (registration)
+                            {
+                                await SendCurrentStep(account);
+                            }
                         }
                         else
                         {
@@ -106,6 +117,30 @@ namespace PSNBot.Process
                                 Text = Messages.YesOrNo,
                                 ParseMode = "HTML",
                             });
+                        }
+                        break;
+                    case Status.AwaitingDeleteConfirmation:
+                        if (string.Equals(text, account.PSNName))
+                        {
+                            _accountService.Delete(account);
+                            await _psnService.RemoveFriend(account.PSNName);
+                            await _telegramClient.SendMessage(new SendMessageQuery()
+                            {
+                                ChatId = account.Id,
+                                Text = Messages.DeleteSuccess,
+                                ParseMode = "HTML",
+                            });
+                        }
+                        else
+                        {
+                            await _telegramClient.SendMessage(new SendMessageQuery()
+                            {
+                                ChatId = account.Id,
+                                Text = Messages.DeleteFail,
+                                ParseMode = "HTML",
+                            });
+                            account.Status = Status.Ok;
+                            _accountService.Update(account);
                         }
                         break;
                 }
@@ -154,6 +189,30 @@ namespace PSNBot.Process
                         ParseMode = "HTML",
                     });
                     break;
+                case Status.AwaitingNewInterests:
+                    await _telegramClient.SendMessage(new SendMessageQuery()
+                    {
+                        ChatId = account.Id,
+                        Text = Messages.StartAwaitingInterests,
+                        ParseMode = "HTML",
+                    });
+                    break;
+                case Status.AwaitingNewTrophies:
+                    await _telegramClient.SendMessage(new SendMessageQuery()
+                    {
+                        ChatId = account.Id,
+                        Text = Messages.StartAwaitingTrophies,
+                        ParseMode = "HTML",
+                    });
+                    break;
+                case Status.AwaitingDeleteConfirmation:
+                    await _telegramClient.SendMessage(new SendMessageQuery()
+                    {
+                        ChatId = account.Id,
+                        Text = Messages.StartAwaitingDeleteConfirmation,
+                        ParseMode = "HTML",
+                    });
+                    break;
                 case Status.Ok:
                     await _telegramClient.SendMessage(new SendMessageQuery()
                     {
@@ -162,7 +221,6 @@ namespace PSNBot.Process
                         ParseMode = "HTML",
                     });
                     break;
-
             }
             return true;
         }

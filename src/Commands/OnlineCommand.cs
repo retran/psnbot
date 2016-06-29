@@ -9,19 +9,19 @@ using PSNBot.Services;
 
 namespace PSNBot.Commands
 {
-    public class TopCommand : Command
+    public class OnlineCommand : Command
     {
         private Regex _regex;
         private PSNService _psnService;
         private TelegramClient _telegramClient;
         private AccountService _accounts;
 
-        public TopCommand(PSNService psnService, TelegramClient telegramClient, AccountService accounts)
+        public OnlineCommand(PSNService psnService, TelegramClient telegramClient, AccountService accounts)
         {
             _psnService = psnService;
             _telegramClient = telegramClient;
             _accounts = accounts;
-            _regex = new Regex("^/top", RegexOptions.IgnoreCase);
+            _regex = new Regex("^/online", RegexOptions.IgnoreCase);
         }
 
         public override bool IsApplicable(Message message)
@@ -40,44 +40,43 @@ namespace PSNBot.Commands
                 }
                 return new
                 {
-                    Id = a.Id,
                     TelegramName = a.TelegramName,
                     PSNName = a.PSNName,
-                    Rating = user.GetRating(),
-                    ThrophyLine = user.GetTrophyLine()
+                    Online = user.GetOnline(),
+                    StatusLine = user.GetStatusLine(),
+                    HasPlus = user.HasPlus()
                 };
             }).ToArray());
 
-            var table = entries.Where(t => t != null)
-                .OrderByDescending(t => t.Rating).ToList();
+            var table = entries.Where(t => t != null && t.Online)
+                .OrderBy(t => t.TelegramName).ToList();
 
-            bool currentUserInList = false;
             StringBuilder sb = new StringBuilder();
-            int i = 1;
-            foreach (var t in table.Take(10))
+
+            foreach (var entry in table)
             {
-                if (t.Id == message.From.Id)
+                var name = entry.TelegramName;
+                if (!string.IsNullOrEmpty(name))
                 {
-                    currentUserInList = true;
-                    sb.AppendLine(string.Format("<b>{0}. {1}</b>", i, !string.IsNullOrEmpty(t.TelegramName) ? t.TelegramName : t.PSNName));
+                    name = name + " (" + entry.PSNName + ")";
                 }
                 else
                 {
-                    sb.AppendLine(string.Format("{0}. {1}", i, !string.IsNullOrEmpty(t.TelegramName) ? t.TelegramName : t.PSNName));
+                    name = entry.PSNName;
                 }
-                i++;
-            }
 
-            if (!currentUserInList)
-            {
-                i = table.FindIndex(t => t.Id == message.From.Id);
-                var currentUser = table[i];
-                sb.AppendLine("...");
-                sb.AppendLine(string.Format("<b>{0}. {1}</b>", i + 1, !string.IsNullOrEmpty(currentUser.TelegramName) ? currentUser.TelegramName : currentUser.PSNName));
-                if (i + 1 != table.Count)
+                if (entry.HasPlus)
                 {
-                    sb.AppendLine("...");
+                    sb.Append("PS+ ");
                 }
+
+                sb.Append(name);
+                if (!string.IsNullOrEmpty(entry.StatusLine))
+                {
+                    sb.Append("\n" + entry.StatusLine);
+                }
+
+                sb.Append("\n\n");
             }
 
             var response = await _telegramClient.SendMessage(new SendMessageQuery()

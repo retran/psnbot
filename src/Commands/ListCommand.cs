@@ -21,7 +21,7 @@ namespace PSNBot.Commands
             _psnService = psnService;
             _telegramClient = telegramClient;
             _accounts = accounts;
-            _regex = new Regex("/list", RegexOptions.IgnoreCase);
+            _regex = new Regex("^/list", RegexOptions.IgnoreCase);
         }
 
         public override bool IsPrivateOnly()

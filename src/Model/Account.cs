@@ -14,6 +14,10 @@ namespace PSNBot.Model
         public const long AwaitingTrophies = 3;
 
         public const long Ok = 1024;
+
+        internal const long AwaitingNewTrophies = 2001;
+        public const long AwaitingNewInterests = 2002;
+        public const long AwaitingDeleteConfirmation = 2003;
     }
         public class Account
     {
@@ -23,5 +27,6 @@ namespace PSNBot.Model
         public string Interests { get; set; }
         public bool ShowTrophies { get; set; }
         public long Status { get; set; }
+        public DateTime RegisteredAt { get; set; }
     }
 }

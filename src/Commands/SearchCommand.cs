@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 
@@ -22,7 +23,7 @@ namespace PSNBot.Commands
             _psnService = psnService;
             _telegramClient = telegramClient;
             _accounts = accounts;
-            _regex = new Regex("/search(\\s+(?<param>.+))?", RegexOptions.IgnoreCase);
+            _regex = new Regex("^/search(\\s+(?<param>.+))?", RegexOptions.IgnoreCase);
         }
 
         public override bool IsApplicable(Message message)
@@ -42,7 +43,7 @@ namespace PSNBot.Commands
                     Text = "Пожалуйста, укажи что ты хочешь найти. Например: /search@clankbot Dark Souls",
                     ParseMode = "HTML",
                 });
-                return false; 
+                return false;
             }
 
             var text = match.Groups["param"].Value;
@@ -55,11 +56,11 @@ namespace PSNBot.Commands
                 var status = userEntry.GetStatus();
                 if (!string.IsNullOrEmpty(status))
                 {
-                    builder.AppendLine(string.Format("{0}", status));
+                    builder.AppendLine(string.Format("{0}\n", status));
                 }
                 if (!string.IsNullOrEmpty(account.Interests))
                 {
-                    builder.AppendLine(string.Format("{0}", account.Interests));
+                    builder.AppendLine(string.Format("Интересы:\n{0}", account.Interests));
                 }
                 builder.AppendLine();
                 return builder.ToString();
@@ -67,34 +68,17 @@ namespace PSNBot.Commands
 
             Task.WaitAll(lines);
 
-            StringBuilder sb = new StringBuilder();
             foreach (var line in lines)
             {
-                if (sb.Length + line.Result.Length < 4096)
+                await _telegramClient.SendMessage(new SendMessageQuery()
                 {
-                    sb.Append(line.Result);
-                }
-                else
-                {
-                    await _telegramClient.SendMessage(new SendMessageQuery()
-                    {
-                        ChatId = message.Chat.Id,
-                        ReplyToMessageId = message.MessageId,
-                        Text = sb.ToString(),
-                        ParseMode = "HTML",
-                    });
-                    sb.Clear();
-                    sb.Append(line.Result);
-                }
+                    ChatId = message.Chat.Id,
+                    ReplyToMessageId = message.MessageId,
+                    Text = line.Result,
+                    ParseMode = "HTML",
+                });
+                Thread.Sleep(200);
             }
-
-            await _telegramClient.SendMessage(new SendMessageQuery()
-            {
-                ChatId = message.Chat.Id,
-                ReplyToMessageId = message.MessageId,
-                Text = sb.ToString(),
-                ParseMode = "HTML",
-            });
 
             return true;
         }

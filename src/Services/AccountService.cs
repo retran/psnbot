@@ -53,7 +53,8 @@ namespace PSNBot.Services
                 ShowTrophies = false,
                 Status = Status.AwaitingPSNName,
                 Interests = string.Empty,
-                PSNName = string.Empty
+                PSNName = string.Empty,
+                RegisteredAt = DateTime.Now.ToUniversalTime()
             };
 
             _databaseService.Insert(account);

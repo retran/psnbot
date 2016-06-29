@@ -21,7 +21,7 @@ namespace PSNBot.Commands
             _telegramClient = telegramClient;
             _accounts = accounts;
             _registrationProcess = registrationProcess;
-            _regex = new Regex("/start", RegexOptions.IgnoreCase);
+            _regex = new Regex("^/start", RegexOptions.IgnoreCase);
         }
 
         public override bool IsPrivateOnly()

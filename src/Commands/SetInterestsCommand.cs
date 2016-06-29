@@ -11,21 +11,21 @@ using System.Threading.Tasks;
 
 namespace PSNBot.Commands
 {
-    public class DeleteCommand : Command
+    class SetInterestsCommand : Command
     {
         private Regex _regex;
         private AccountService _accounts;
         private TelegramClient _telegramClient;
         private PSNService _psnService;
-        private RegistrationProcess _process;
+        private RegistrationProcess _registrationProcess;
 
-        public DeleteCommand(PSNService psnService, TelegramClient telegramClient, AccountService accounts, RegistrationProcess process)
+        public SetInterestsCommand(PSNService psnService, TelegramClient telegramClient, AccountService accounts, RegistrationProcess registrationProcess)
         {
             _psnService = psnService;
             _telegramClient = telegramClient;
             _accounts = accounts;
-            _regex = new Regex("^/delete", RegexOptions.IgnoreCase);
-            _process = process;
+            _regex = new Regex("^/setinterests", RegexOptions.IgnoreCase);
+            _registrationProcess = registrationProcess;
         }
 
         public override bool IsPrivateOnly()
@@ -38,9 +38,9 @@ namespace PSNBot.Commands
             var account = _accounts.GetById(message.From.Id);
             if (account != null)
             {
-                account.Status = Status.AwaitingDeleteConfirmation;
+                account.Status = Status.AwaitingNewInterests;
                 _accounts.Update(account);
-                await _process.SendCurrentStep(account);
+                await _registrationProcess.SendCurrentStep(account);
             }
             else
             {

@@ -18,6 +18,7 @@ namespace PSNBot.Model
         public string Detail { get; set; }
         public string Image { get; set; }
         public Account Account { get; set; }
+        public string Title { get; private set; }
 
         public TrophyEntry(Account account, RecentActivityEntity.CondensedStory story)
         {
@@ -26,11 +27,12 @@ namespace PSNBot.Model
             Event = story.Caption;
             Source = story.Source.Meta;
 
-            var targets = story.Targets;
+            var targets = story.Targets;            
 
             var name = targets.FirstOrDefault(t => t.Type == "TROPHY_NAME");
             var detail = targets.FirstOrDefault(t => t.Type == "TROPHY_DETAIL");
             var url = targets.FirstOrDefault(t => t.Type == "TROPHY_IMAGE_URL");
+            var title = targets.FirstOrDefault(t => t.Type == "TITLE_NAME");
 
             if (name != null)
             {
@@ -45,6 +47,11 @@ namespace PSNBot.Model
             if (url != null)
             {
                 Image = url.Meta;
+            }
+
+            if (title != null)
+            {
+                Title = title.Meta;
             }
         }
 
@@ -60,6 +67,7 @@ namespace PSNBot.Model
             var name = targets.FirstOrDefault(t => t.Type == "TROPHY_NAME");
             var detail = targets.FirstOrDefault(t => t.Type == "TROPHY_DETAIL");
             var url = targets.FirstOrDefault(t => t.Type == "TROPHY_IMAGE_URL");
+            var title = targets.FirstOrDefault(t => t.Type == "TITLE_NAME");
 
             if (name != null)
             {
@@ -75,14 +83,29 @@ namespace PSNBot.Model
             {
                 Image = url.Meta;
             }
+
+            if (title != null)
+            {
+                Title = title.Meta;
+            }
         }
 
         public string GetTelegramMessage()
         {
+            
             StringBuilder sb = new StringBuilder();
-            sb.Append("👻");
-            sb.Append(Event);
-            sb.Append(string.Format(" ({0})", Account.TelegramName));
+
+            var name = Account.TelegramName;
+            if (string.IsNullOrEmpty(name))
+            {
+                name = Account.PSNName;
+            }
+            else
+            {
+                name = "@" + name + " (" + Account.PSNName + ")";
+            }
+
+            sb.Append("🎂🎂🎂 Поздравляем пользователя " + name  +" с получением" + (string.IsNullOrEmpty(Name) ? " скрытого" : "") + " приза в игре " + Title + "!");
             if (!string.IsNullOrEmpty(Name))
             {
                 sb.Append("\n\n");

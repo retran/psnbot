@@ -63,6 +63,7 @@
       <HintPath>packages\System.Data.SQLite.Linq.1.0.101.0\lib\net451\System.Data.SQLite.Linq.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Net.Http.Formatting, Version=5.2.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.AspNet.WebApi.Client.5.2.2\lib\net45\System.Net.Http.Formatting.dll</HintPath>
       <Private>True</Private>
@@ -81,7 +82,10 @@
     <Compile Include="Commands\ListCommand.cs" />
     <Compile Include="Commands\RulesCommand.cs" />
     <Compile Include="Commands\SearchCommand.cs" />
+    <Compile Include="Commands\SetTrophiesCommand.cs" />
+    <Compile Include="Commands\SetInterestsCommand.cs" />
     <Compile Include="Commands\StartCommand.cs" />
+    <Compile Include="Commands\OnlineCommand.cs" />
     <Compile Include="Commands\TopCommand.cs" />
     <Compile Include="FriendPoller.cs" />
     <Compile Include="Model\TimeStamp.cs" />

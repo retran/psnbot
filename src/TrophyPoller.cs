@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using PSNBot.Telegram;
 using System.Net;
 using PSNBot.Services;
+using System.Drawing;
+using System.IO;
+using System.Drawing.Imaging;
 
 namespace PSNBot
 {
@@ -55,6 +58,15 @@ namespace PSNBot
                         {
                             WebClient myWebClient = new WebClient();
                             image = myWebClient.DownloadData(ach.Image);
+
+                            using (var outputStream = new MemoryStream())
+                            {
+                                Bitmap bitmap = new Bitmap(new MemoryStream(image));
+                                var resized = new Bitmap(bitmap, 128, 128);
+                                resized.Save(outputStream, ImageFormat.Png);
+                                outputStream.Seek(0, SeekOrigin.Begin);
+                                outputStream.Read(image, 0, (int)outputStream.Length);
+                            }
                         }
 
                         if (!string.IsNullOrEmpty(ach.Image))
@@ -75,6 +87,7 @@ namespace PSNBot
                     }
                     _timestampService.Set(".timestamp", lastTimeStamp);
                 }
+                Thread.Sleep(10000);
             }
             catch (Exception e)
             {
