@@ -54,40 +54,47 @@ namespace PSNBot.Commands
             bool currentUserInList = false;
             StringBuilder sb = new StringBuilder();
             int i = 1;
-            foreach (var t in table.Take(10))
+
+            if (table.Any())
             {
-                if (t.Id == message.From.Id)
+                foreach (var t in table.Take(10))
                 {
-                    currentUserInList = true;
-                    sb.AppendLine(string.Format("<b>{0}. {1}</b>", i, !string.IsNullOrEmpty(t.TelegramName) ? t.TelegramName : t.PSNName));
+                    if (t.Id == message.From.Id)
+                    {
+                        currentUserInList = true;
+                        sb.AppendLine(string.Format("<b>{0}. {1}</b>", i, !string.IsNullOrEmpty(t.TelegramName) ? t.TelegramName : t.PSNName));
+                    }
+                    else
+                    {
+                        sb.AppendLine(string.Format("{0}. {1}", i, !string.IsNullOrEmpty(t.TelegramName) ? t.TelegramName : t.PSNName));
+                    }
+                    i++;
                 }
-                else
+
+                if (!currentUserInList)
                 {
-                    sb.AppendLine(string.Format("{0}. {1}", i, !string.IsNullOrEmpty(t.TelegramName) ? t.TelegramName : t.PSNName));
+                    i = table.FindIndex(t => t.Id == message.From.Id);
+                    if (i > 0 && i < table.Count())
+                    {
+                        var currentUser = table[i];
+                        sb.AppendLine("...");
+                        sb.AppendLine(string.Format("<b>{0}. {1}</b>", i + 1, !string.IsNullOrEmpty(currentUser.TelegramName) ? currentUser.TelegramName : currentUser.PSNName));
+                        if (i + 1 != table.Count)
+                        {
+                            sb.AppendLine("...");
+                        }
+                    }
                 }
-                i++;
+
+
+                var response = await _telegramClient.SendMessage(new SendMessageQuery()
+                {
+                    ChatId = message.Chat.Id,
+                    ReplyToMessageId = message.MessageId,
+                    Text = sb.ToString(),
+                    ParseMode = "HTML",
+                });
             }
-
-            if (!currentUserInList)
-            {
-                i = table.FindIndex(t => t.Id == message.From.Id);
-                var currentUser = table[i];
-                sb.AppendLine("...");
-                sb.AppendLine(string.Format("<b>{0}. {1}</b>", i + 1, !string.IsNullOrEmpty(currentUser.TelegramName) ? currentUser.TelegramName : currentUser.PSNName));
-                if (i + 1 != table.Count)
-                {
-                    sb.AppendLine("...");
-                }
-            }
-
-            var response = await _telegramClient.SendMessage(new SendMessageQuery()
-            {
-                ChatId = message.Chat.Id,
-                ReplyToMessageId = message.MessageId,
-                Text = sb.ToString(),
-                ParseMode = "HTML",
-            });
-
             return true;
         }
     }

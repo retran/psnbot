@@ -12,11 +12,7 @@ namespace PSNBot
         public static readonly string FriendRequestMessage = "Привет! Это Кланк из чата PS4RUS!";
         public static readonly string PrivateOnlyCommand = "Извини, эту команду можно использовать только в личных сообщениях.";
         public static readonly string AlreadyRegistered = "Привет! Ты уже зарегистрирован. Используй команду /rules, чтобы прочесть правила, и команду /help, чтобы получить справку по командам.";
-        public static readonly string Rules = @"Наш канал тут: @PS4RUS
-Администрация: @Sonyrus @uncia_perca @retran
-Статистика: https://combot.org/chat/-1001017895589
-
-Будьте вежливы друг с другом. Спасибо.";
+        public static readonly string Rules = @"RULESS";
         public static readonly string Help = @"Ты можешь использовать следующие команды:
 
 В личных сообщениях бота:

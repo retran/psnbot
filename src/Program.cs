@@ -41,14 +41,16 @@ namespace PSNBot
 
             var registrationProcess = new RegistrationProcess(telegramClient, client, accounts);
 
-            using (var poller = new MessagePoller(database, telegramClient, client, accounts, registrationProcess, -1001017895589))
-            using (var imagePoller = new ImagePoller(telegramClient, client, accounts, timestampService, -1001017895589))
-            using (var trophyPoller = new TrophyPoller(telegramClient, client, accounts, timestampService, -1001017895589))
+            var chatId = -1001019649766;
+
+            using (var poller = new MessagePoller(database, telegramClient, client, accounts, registrationProcess, chatId))
+            using (var imagePoller = new ImagePoller(telegramClient, client, accounts, timestampService, chatId))
+            using (var trophyPoller = new TrophyPoller(telegramClient, client, accounts, timestampService, chatId))
             using (var friendPoller = new FriendPoller(telegramClient, client, accounts, registrationProcess))
             {
                 poller.Start();
                 imagePoller.Start();
-                trophyPoller.Start();
+                //trophyPoller.Start();
                 friendPoller.Start();
 
                 while (true)
