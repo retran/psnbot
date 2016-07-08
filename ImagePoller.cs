@@ -1,17 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using PSNBot.Telegram;
-using System.Net;
-using System.IO;
-using System.Globalization;
-using System.Text;
-using System.Collections.Generic;
-using PsnLib.Entities;
 using PSNBot.Services;
-using PSNBot.Model;
 
 namespace PSNBot
 {
@@ -73,7 +65,7 @@ namespace PSNBot
             }
             catch (Exception e)
             {
-                Trace.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
+                //Trace.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
             }
         }
 

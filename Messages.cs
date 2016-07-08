@@ -1,9 +1,5 @@
 ﻿using PSNBot.Telegram;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace PSNBot
 {
@@ -34,7 +30,7 @@ top - отобразить рейтинг пользователей (рассч
 регистрации.
 ";
         public static readonly string StartAwaitingPSNName = "Пожалуйста, укажи свой идентификатор PSN.";
-        public static readonly string StartAwaitingFriendRequest = "Я отправил тебе запрос на добавление в друзья в PSN. Добавь меня в течении часа и мы сможем продолжить.";
+        public static readonly string StartAwaitingFriendRequest = "Я отправил тебе запрос на добавление в друзья в PSN. Добавь меня в течение часа и мы сможем продолжить.";
         public static readonly string AwaitingFriendRequestAborted = "К сожалению, ты не успел добавить меня в друзья за час. Напиши /start, чтобы начать сначала.";
         public static readonly string StartAwaitingInterests = "Пожалуйста, расскажи в двух словах в какие игры ты любишь играть и что тебя интересует.";
         public static readonly string SavedInterests = "Отлично, теперь другие пользователи с похожими интересами смогут тебя найти!";

@@ -1,6 +1,5 @@
 ﻿using PSNBot.Services;
 using PSNBot.Telegram;
-using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 

@@ -1,9 +1,6 @@
 ﻿using PSNBot.Model;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PSNBot.Services
 {
@@ -27,7 +24,7 @@ namespace PSNBot.Services
 
         public DateTime Get(string id)
         {
-            var timestamp = _databaseService.Select<TimeStamp>("id", id).FirstOrDefault();
+            var timestamp = _databaseService.Select<TimeStamp>("Id", id).FirstOrDefault();
             if (timestamp != null)
             {
                 return timestamp.Stamp.ToUniversalTime();

@@ -1,11 +1,4 @@
-﻿using PsnLib.Managers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using PsnLib.Entities;
-using System.Net;
+﻿using System;
 using PSNBot.Services;
 using PSNBot.Process;
 
@@ -30,10 +23,10 @@ namespace PSNBot
             Console.OutputEncoding = System.Text.Encoding.Unicode;
 
             var client = new PSNService();
-            var task = client.Login("retran@tolkien.ru", "a1C23k8U");
+            var task = client.Login("retran@tolkien.ru", "");
             task.Wait();
 
-            var telegramClient = new Telegram.TelegramClient("236064122:AAHFYoLjQauLCouMK9IGgIlXJBUKNCl0S_o");
+            var telegramClient = new Telegram.TelegramClient("");
             var database = new DatabaseService("../psnbot.sqlite");
 
             var accounts = new AccountService(database);

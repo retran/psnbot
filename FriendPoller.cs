@@ -3,7 +3,6 @@ using PSNBot.Process;
 using PSNBot.Services;
 using PSNBot.Telegram;
 using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -72,7 +71,7 @@ namespace PSNBot
             }
             catch (Exception e)
             {
-                Trace.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
+                //Trace.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
             }
         }
 

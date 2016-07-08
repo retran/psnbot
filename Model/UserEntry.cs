@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using PsnLib.Entities;
+﻿using PsnLib.Entities;
 using System;
 using System.Globalization;
 
@@ -45,7 +44,7 @@ namespace PSNBot.Model
 
                     if (presence.PrimaryInfo.LastOnlineDate != null)
                     {
-                        status += "\nLast seen: " + DateTime.Parse(presence.PrimaryInfo.LastOnlineDate, CultureInfo.InvariantCulture).ToString(CultureInfo.GetCultureInfo("ru-RU"));
+                        status += "\nLast seen: " + DateTime.Parse(presence.PrimaryInfo.LastOnlineDate, CultureInfo.InvariantCulture).ToString();
                     }
 
                     //if (user.trophySummary != null)
@@ -98,7 +97,8 @@ namespace PSNBot.Model
         {
             if (_trophies != null)
             {
-                return string.Format("[P {0}] [G {1}] [S {2}] [B {3}]", _trophies.EarnedTrophies.Platinum, _trophies.EarnedTrophies.Gold, _trophies.EarnedTrophies.Silver, _trophies.EarnedTrophies.Bronze);
+                return string.Format("[P {0}] [G {1}] [S {2}] [B {3}]", _trophies.EarnedTrophies.Platinum, 
+                _trophies.EarnedTrophies.Gold, _trophies.EarnedTrophies.Silver, _trophies.EarnedTrophies.Bronze);
             }
             return string.Empty;
         }

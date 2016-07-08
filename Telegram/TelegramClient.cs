@@ -1,8 +1,8 @@
 ﻿using System;
-using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace PSNBot.Telegram
 {
@@ -26,40 +26,46 @@ namespace PSNBot.Telegram
             return client;
         }
 
-        public Task<Response<User>> GetMe()
+        private HttpContent CreateHttpContentFromObject(object data)
+        {
+            if (data == null)
+            {
+                return new StringContent(string.Empty);
+            }
+
+            var raw = JsonConvert.SerializeObject(data);
+            var content = new StringContent(raw);
+
+            content.Headers.ContentType.MediaType = "application/json";
+            return content;
+        }
+
+        private async Task<T> Post<T>(string uri, object query = null)
         {
             using (var c = CreateHttpClient())
             {
-                return c.PostAsJsonAsync("getMe", string.Empty).ContinueWith(task =>
-                {
-                    return task.Result.Content.ReadAsAsync<Response<User>>();
-                }).Result;
-            }
+                var response = await c.PostAsync(uri, CreateHttpContentFromObject(query));
+                var data = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<T>(data);
+            }            
         }
 
-        public Task<Response<Update[]>> GetUpdates(GetUpdatesQuery query)
+        public async Task<Response<User>> GetMe()
         {
-            using (var c = CreateHttpClient())
-            {
-                return c.PostAsJsonAsync("getUpdates", query).ContinueWith(task =>
-                {
-                    return task.Result.Content.ReadAsAsync<Response<Update[]>>();
-                }).Result;
-            }
+            return await Post<Response<User>>("getMe");
         }
 
-        public Task<Response<Message>> SendMessage(SendMessageQuery query)
+        public async Task<Response<Update[]>> GetUpdates(GetUpdatesQuery query)
         {
-            using (var c = CreateHttpClient())
-            {
-                return c.PostAsJsonAsync("sendMessage", query).ContinueWith(task =>
-                {
-                    return task.Result.Content.ReadAsAsync<Response<Message>>();
-                }).Result;
-            }
+            return await Post<Response<Update[]>>("getUpdates", query);
         }
 
-        public Task<Response<Message>> SendPhoto(SendPhotoQuery query, byte[] data)
+        public async Task<Response<Message>> SendMessage(SendMessageQuery query)
+        {
+            return await Post<Response<Message>>("sendMessage", query);
+        }
+
+        public async Task<Response<Message>> SendPhoto(SendPhotoQuery query, byte[] data)
         {
             using (var c = CreateHttpClient())
             {
@@ -70,13 +76,11 @@ namespace PSNBot.Telegram
                         MediaTypeHeaderValue.Parse("image/png");
 
                     content.Add(imageContent, "photo", "image.png");
-                    return c.PostAsync(string.Format("sendPhoto?chat_id={0}", query.ChatId), content).ContinueWith(task =>
-                    {
-                        return task.Result.Content.ReadAsAsync<Response<Message>>();
-                    }).Result;
+                    var response = await c.PostAsync(string.Format("sendPhoto?chat_id={0}", query.ChatId), content);
+                    var raw = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<Response<Message>>(raw);
                 }
             }
         }
-
     }
 }

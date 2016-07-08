@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using PSNBot.Telegram;
-using System.Net;
 using PSNBot.Services;
-using System.Drawing;
+//using System.Drawing;
 using System.IO;
-using System.Drawing.Imaging;
+using System.Net.Http;
+//using System.Drawing.Imaging;
 
 namespace PSNBot
 {
@@ -56,17 +55,20 @@ namespace PSNBot
 
                         if (!string.IsNullOrEmpty(ach.Image))
                         {
-                            WebClient myWebClient = new WebClient();
-                            image = myWebClient.DownloadData(ach.Image);
+                            HttpClient httpClient = new HttpClient();
+                            image = await httpClient.GetByteArrayAsync(ach.Image);
+                            
+                            //WebClient myWebClient = new WebClient();
+                            //image = myWebClient.DownloadData(ach.Image);
 
-                            using (var outputStream = new MemoryStream())
-                            {
-                                Bitmap bitmap = new Bitmap(new MemoryStream(image));
-                                var resized = new Bitmap(bitmap, 128, 128);
-                                resized.Save(outputStream, ImageFormat.Png);
-                                outputStream.Seek(0, SeekOrigin.Begin);
-                                outputStream.Read(image, 0, (int)outputStream.Length);
-                            }
+                            // using (var outputStream = new MemoryStream())
+                            // {
+                            //     Bitmap bitmap = new Bitmap(new MemoryStream(image));
+                            //     var resized = new Bitmap(bitmap, 128, 128);
+                            //     resized.Save(outputStream, ImageFormat.Png);
+                            //     outputStream.Seek(0, SeekOrigin.Begin);
+                            //     outputStream.Read(image, 0, (int)outputStream.Length);
+                            // }
                         }
 
                         if (!string.IsNullOrEmpty(ach.Image))
@@ -91,7 +93,7 @@ namespace PSNBot
             }
             catch (Exception e)
             {
-                Trace.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
+             //   Trace.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
             }
         }
 

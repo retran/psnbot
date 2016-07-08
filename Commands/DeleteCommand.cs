@@ -2,10 +2,6 @@
 using PSNBot.Process;
 using PSNBot.Services;
 using PSNBot.Telegram;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
