@@ -98,11 +98,11 @@ namespace PSNBot
                 return;
             }
 
-            //if (acc != null && acc.TelegramName != message.From.Username)
-            //{
-            //    acc.TelegramName = message.From.Username;
-            //    _accounts.Persist();
-            //}
+            if (account != null && account.TelegramName != (message.From.Username ?? string.Empty))
+            {
+                account.TelegramName = message.From.Username ?? string.Empty;
+                _accounts.Update(account);
+            }
 
             if (message.NewChatMember != null && account == null)
             {

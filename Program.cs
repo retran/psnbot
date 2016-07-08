@@ -30,10 +30,10 @@ namespace PSNBot
             Console.OutputEncoding = System.Text.Encoding.Unicode;
 
             var client = new PSNService();
-            var task = client.Login("retran@tolkien.ru", "");
+            var task = client.Login("retran@tolkien.ru", "a1C23k8U");
             task.Wait();
 
-            var telegramClient = new Telegram.TelegramClient("");
+            var telegramClient = new Telegram.TelegramClient("236064122:AAHFYoLjQauLCouMK9IGgIlXJBUKNCl0S_o");
             var database = new DatabaseService("../psnbot.sqlite");
 
             var accounts = new AccountService(database);
@@ -50,7 +50,7 @@ namespace PSNBot
             {
                 poller.Start();
                 imagePoller.Start();
-                //trophyPoller.Start();
+                trophyPoller.Start();
                 friendPoller.Start();
 
                 while (true)

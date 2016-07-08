@@ -52,8 +52,24 @@ namespace PSNBot.Services
 
         public async Task<bool> CheckFriend(string pSNName)
         {
-            var list = await _friendManager.GetFriendsList(_userAccountEntity.Entity.OnlineId, 0, false, false, false, true, false, false, false, _userAccountEntity);
-            return list.FriendList != null && list.FriendList.Any(f => string.Equals(f.OnlineId, pSNName, StringComparison.OrdinalIgnoreCase));
+            int offset = 0;
+            while (true)
+            {
+                var list = await _friendManager.GetFriendsList(_userAccountEntity.Entity.OnlineId, offset, false, false, false, true, false, false, false, _userAccountEntity);
+                if (list.FriendList == null)
+                {
+                    return false;
+                }
+                offset = offset + list.FriendList.Count();
+                if (list.FriendList.Any(f => string.Equals(f.OnlineId, pSNName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return true;
+                }
+                if (offset >= list.TotalResults)
+                {
+                    return false;
+                }
+            }
         }
 
         public async Task<bool> RemoveFriend(string psnName)

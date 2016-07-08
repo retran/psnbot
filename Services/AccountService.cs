@@ -49,7 +49,7 @@ namespace PSNBot.Services
             var account = new Account()
             {
                 Id = id,
-                TelegramName = username,
+                TelegramName = username ?? string.Empty,
                 ShowTrophies = false,
                 Status = Status.AwaitingPSNName,
                 Interests = string.Empty,
