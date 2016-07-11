@@ -90,9 +90,6 @@ namespace PSNBot.Model
 
         public string GetTelegramMessage()
         {
-            
-            StringBuilder sb = new StringBuilder();
-
             var name = Account.TelegramName;
             if (string.IsNullOrEmpty(name))
             {
@@ -103,15 +100,15 @@ namespace PSNBot.Model
                 name = "@" + name + " (" + Account.PSNName + ")";
             }
 
-            sb.Append("🎂🎂🎂 Поздравляем пользователя " + name  +" с получением" + (string.IsNullOrEmpty(Name) ? " скрытого" : "") + " приза в игре " + Title + "!");
-            if (!string.IsNullOrEmpty(Name))
+            if (string.IsNullOrEmpty(Name))
             {
-                sb.Append("\n\n");
-                sb.Append("<b>\"" + Name + "\"</b>");
-                sb.Append("\n");
-                sb.Append(Detail);
+                return string.Format("{0} получил скрытый приз в игре <b>{1}</b>", name, Title);
             }
-            return sb.ToString();
+            else
+            {
+                var link = string.Format("http://psnbot.corvusalba.ru/trophy?title={0}&content={1}&image={2}", Name, Detail, Image);
+                return string.Format("{0} получил <a href={1}>приз</a> в игре <b>{2}</b>", name, link, Title);
+            }
         }
     }
 }

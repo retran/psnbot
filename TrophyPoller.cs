@@ -51,34 +51,6 @@ namespace PSNBot
                             continue;
                         }
 
-                        byte[] image = null;
-
-                        if (!string.IsNullOrEmpty(ach.Image))
-                        {
-                            HttpClient httpClient = new HttpClient();
-                            image = await httpClient.GetByteArrayAsync(ach.Image);
-                            
-                            //WebClient myWebClient = new WebClient();
-                            //image = myWebClient.DownloadData(ach.Image);
-
-                            // using (var outputStream = new MemoryStream())
-                            // {
-                            //     Bitmap bitmap = new Bitmap(new MemoryStream(image));
-                            //     var resized = new Bitmap(bitmap, 128, 128);
-                            //     resized.Save(outputStream, ImageFormat.Png);
-                            //     outputStream.Seek(0, SeekOrigin.Begin);
-                            //     outputStream.Read(image, 0, (int)outputStream.Length);
-                            // }
-                        }
-
-                        if (!string.IsNullOrEmpty(ach.Image))
-                        {
-                            var message = await _telegramClient.SendPhoto(new Telegram.SendPhotoQuery()
-                            {
-                                ChatId = _chatId
-                            }, image);
-                        }
-
                         var msg = await _telegramClient.SendMessage(new Telegram.SendMessageQuery()
                         {
                             ChatId = _chatId,

@@ -1,6 +1,7 @@
 ﻿using System;
 using PSNBot.Services;
 using PSNBot.Process;
+using Microsoft.AspNetCore.Hosting;
 
 namespace PSNBot
 {
@@ -27,7 +28,7 @@ namespace PSNBot
             task.Wait();
 
             var telegramClient = new Telegram.TelegramClient("");
-            var database = new DatabaseService("../psnbot.sqlite");
+            var database = new DatabaseService("../../../psnbot.sqlite");
 
             var accounts = new AccountService(database);
             var timestampService = new TimeStampService(database);
@@ -46,10 +47,11 @@ namespace PSNBot
                 trophyPoller.Start();
                 friendPoller.Start();
 
-                while (true)
-                {
-                    ;
-                }
+                var host = new WebHostBuilder()
+                    .UseKestrel()
+                    .UseStartup<Startup>()
+                    .Build();
+                host.Run();            
             }
         }
     }
