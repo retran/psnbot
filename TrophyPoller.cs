@@ -56,6 +56,8 @@ namespace PSNBot
                             ChatId = _chatId,
                             Text = ach.GetTelegramMessage(),
                             ParseMode = "HTML",
+                            DisableWebPagePreview = false,
+                            DisableNotification = true
                         });
                         Thread.Sleep(1000);
                     }

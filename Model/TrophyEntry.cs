@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Text;
 using PsnLib.Entities;
 
@@ -102,12 +103,12 @@ namespace PSNBot.Model
 
             if (string.IsNullOrEmpty(Name))
             {
-                return string.Format("{0} получил скрытый приз в игре <b>{1}</b>", name, Title);
+                return string.Format("{0} получил скрытый трофей в игре <b>{1}</b>", name, Title);
             }
             else
             {
-                var link = string.Format("http://psnbot.corvusalba.ru/trophy?title={0}&content={1}&image={2}", Name, Detail, Image);
-                return string.Format("{0} получил <a href={1}>приз</a> в игре <b>{2}</b>", name, link, Title);
+                var link = string.Format("http://psnbot.corvusalba.ru/trophy/{0}/{1}/{2}", WebUtility.UrlEncode(Name), WebUtility.UrlEncode(Detail), WebUtility.UrlEncode(Image));
+                return string.Format("{0} получил <a href=\"{1}\">трофей</a> в игре <b>{2}</b>", name, link, Title);
             }
         }
     }
