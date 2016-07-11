@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -19,9 +21,10 @@ namespace PSNBot
 
                     if (path.StartsWithSegments(new PathString("/trophy"), StringComparison.OrdinalIgnoreCase))
                     {
-                        var title = context.Request.Query["title"];
-                        var content = context.Request.Query["content"];
-                        var image = context.Request.Query["image"];
+                        var segments = path.Value.Split(new [] { '/' }, StringSplitOptions.None);
+                        var title = WebUtility.UrlDecode(segments[2]);
+                        var content = WebUtility.UrlDecode(segments[3]);
+                        var image = segments[4] + "//" + string.Join("/", segments.Skip(5));
 
                         html = string.Format(@" <!DOCTYPE html>
                                                     <html 	xmlns=""http://www.w3.org/1999/xhtml""
