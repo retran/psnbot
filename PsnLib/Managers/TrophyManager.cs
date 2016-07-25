@@ -26,9 +26,9 @@ namespace PsnLib.Managers
             try
             {
                 var userAccount = userAccountEntity.GetUserEntity();
-                var url = string.Format(EndPoints.TrophyList, userAccount.Region, userAccount.Language, offset, user,
-                    userAccountEntity.GetUserEntity().OnlineId);
-                url += "&r=" + Guid.NewGuid();
+                var url = string.Format(EndPoints.TrophyList, userAccount.Region, userAccount.Language, offset, user); //,
+                  //  userAccountEntity.GetUserEntity().OnlineId);
+                //url += "&r=" + Guid.NewGuid();
                 var result = await _webManager.GetData(new Uri(url), userAccountEntity);
                 var trophy = JsonConvert.DeserializeObject<TrophyEntity>(result.ResultJson);
                 return trophy;

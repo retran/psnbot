@@ -17,6 +17,8 @@ namespace PSNBot.Services
         private UserAccountEntity _userAccountEntity;
         private MessageManager _messageManager;
         private UserManager _userManager;
+        private TrophyManager _trophyManager;
+        private TrophyDetailManager _trophyDetailManager;
 
         public PSNService()
         {
@@ -25,6 +27,8 @@ namespace PSNBot.Services
             _friendManager = new FriendManager();
             _messageManager = new MessageManager();
             _userManager = new UserManager();
+            _trophyManager = new TrophyManager();
+            _trophyDetailManager = new TrophyDetailManager();
         }
 
         public async Task<bool> Login(string username, string password)
@@ -33,20 +37,39 @@ namespace PSNBot.Services
             return _userAccountEntity != null;
         }
 
-        public async Task<IEnumerable<TrophyEntry>> GetTrophies(IEnumerable<Account> accounts)
+        public async Task<IEnumerable<TrophyEntry>> GetTrophies(Account account, DateTime lastUpdatedStamp)
         {
-            var tasks = accounts.AsParallel().Select(async account =>
+            var results = new List<TrophyEntry>();
+            var trophies = await _trophyManager.GetTrophyList(account.PSNName, 0, _userAccountEntity);
+            if (trophies != null && trophies.TrophyTitles != null && trophies.TrophyTitles.Any())
             {
-                var activity = await _recentActivityManager.GetActivityFeed(account.PSNName, 0, false, false, _userAccountEntity);
-
-                if (activity != null)
+                foreach (var trophy in trophies.TrophyTitles.Where(tt => tt.ComparedUser != null && (DateTime.Parse(tt.ComparedUser.LastUpdateDate).ToUniversalTime() > lastUpdatedStamp)))
                 {
-                    return GetTrophiesImpl(activity.feed, account);
-                }
+                    var details = await _trophyDetailManager.GetTrophyDetailList(trophy.NpCommunicationId, account.PSNName, true, _userAccountEntity);
+                    if (details != null && details.Trophies != null && details.Trophies.Any())
+                    {
+                        foreach (var detail in details.Trophies.Where(t => t.ComparedUser.Earned && DateTime.Parse(t.ComparedUser.EarnedDate).ToUniversalTime() > account.LastPolledTrophy))
+                        {
+                            results.Add(new TrophyEntry(account, detail, DateTime.Parse(detail.ComparedUser.EarnedDate).ToUniversalTime(), trophy.TrophyTitleName, trophy.NpCommunicationId));                           
+                        }
+                    }                        
+                }                    
+            }                
+            return results.OrderBy(r => r.TimeStamp);
+        }
 
-                return new TrophyEntry[] { };
-            }).ToArray();
-            return (await Task.WhenAll(tasks)).SelectMany(_ => _);
+        public async Task<TrophyEntry> GetTrophy(string npComm, int id)
+        {
+            var details = await _trophyDetailManager.GetTrophyDetailList(npComm, _userAccountEntity.Entity.OnlineId, true, _userAccountEntity);
+            if (details != null && details.Trophies != null && details.Trophies.Any())
+            {
+                var detail = details.Trophies.FirstOrDefault(t => t.TrophyId == id);
+                if (detail != null)
+                {
+                    return new TrophyEntry(null, detail, DateTime.Now, null, null);
+                }                           
+            }    
+            return null;                    
         }
 
         public async Task<bool> CheckFriend(string pSNName)
@@ -133,27 +156,6 @@ namespace PSNBot.Services
             catch
             {
                 return new Image[] { };
-            }
-        }
-
-        private static IEnumerable<TrophyEntry> GetTrophiesImpl(List<RecentActivityEntity.Feed> feed, Account account)
-        {
-            if (feed != null)
-            {
-                foreach (var entry in feed.Where(e => e.StoryType == "TROPHY"))
-                {
-                    if (entry.CondensedStories != null && entry.CondensedStories.Any())
-                    {
-                        foreach (var story in entry.CondensedStories)
-                        {
-                            yield return new TrophyEntry(account, story);
-                        }
-                    }
-                    else
-                    {
-                        yield return new TrophyEntry(account, entry);
-                    }
-                }
             }
         }
     }

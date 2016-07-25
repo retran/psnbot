@@ -24,5 +24,6 @@ namespace PSNBot.Model
         public bool ShowTrophies { get; set; }
         public long Status { get; set; }
         public DateTime RegisteredAt { get; set; }
+        public DateTime LastPolledTrophy {get; set;}
     }
 }

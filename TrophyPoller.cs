@@ -34,36 +34,45 @@ namespace PSNBot
         private async Task Poll()
         {
             try
-            {
+            {               
                 var dt = DateTime.Now;
-                if ((dt - _lastCheckDateTime).TotalSeconds > 60)
+                if ((dt - _lastCheckDateTime).TotalSeconds > 10)
                 {
                     DateTime lastTimeStamp = _timestampService.Get(".timestamp");
                     _lastCheckDateTime = dt;
-                    var trophies = await _psnService.GetTrophies(_accounts.GetAllWithShowTrophies());
-                    foreach (var ach in trophies.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
-                    {
-                        lastTimeStamp = ach.TimeStamp;
-
-                        var account = _accounts.GetByPSN(ach.Source);
-                        if (account == null)
+                    var accounts = _accounts.GetAllWithShowTrophies();
+                    foreach (var account in accounts)
+                    {                                            
+                        var trophies = await _psnService.GetTrophies(account, lastTimeStamp);                        
+                        foreach (var ach in trophies.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
                         {
-                            continue;
+                            var acc = _accounts.GetByPSN(account.PSNName);
+                            if (acc == null)
+                            {
+                                continue;
+                            }
+
+                            var msg = await _telegramClient.SendMessage(new Telegram.SendMessageQuery()
+                            {
+                                ChatId = _chatId,
+                                Text = ach.GetTelegramMessage(),
+                                ParseMode = "HTML",
+                                DisableWebPagePreview = false,
+                                DisableNotification = true
+                            });
+                            
+                            Thread.Sleep(1000);
                         }
 
-                        var msg = await _telegramClient.SendMessage(new Telegram.SendMessageQuery()
+                        if (trophies.Any())
                         {
-                            ChatId = _chatId,
-                            Text = ach.GetTelegramMessage(),
-                            ParseMode = "HTML",
-                            DisableWebPagePreview = false,
-                            DisableNotification = true
-                        });
-                        Thread.Sleep(1000);
+                            account.LastPolledTrophy = trophies.Last().TimeStamp;
+                            _accounts.Update(account);
+                        }
                     }
-                    _timestampService.Set(".timestamp", lastTimeStamp);
+                    _timestampService.Set(".timestamp", DateTime.Now);
                 }
-                Thread.Sleep(10000);
+                Thread.Sleep(1000);
             }
             catch (Exception e)
             {

@@ -54,7 +54,8 @@ namespace PSNBot.Services
                 Status = Status.AwaitingPSNName,
                 Interests = string.Empty,
                 PSNName = string.Empty,
-                RegisteredAt = DateTime.Now.ToUniversalTime()
+                RegisteredAt = DateTime.Now.ToUniversalTime(),
+                LastPolledTrophy = DateTime.Now.ToUniversalTime()
             };
 
             _databaseService.Insert(account);

@@ -8,85 +8,32 @@ namespace PSNBot.Model
 {
     public class TrophyEntry
     {
-        private RecentActivityEntity.Feed entry;
-
+        private TrophyDetailEntity.Trophy _trophy;
         public string Source { get; set; }
+
         public DateTime TimeStamp { get; set; }
-        public string Event { get; set; }
         public string Name { get; set; }
         public string Detail { get; set; }
         public string Image { get; set; }
         public Account Account { get; set; }
         public string Title { get; private set; }
 
-        public TrophyEntry(Account account, RecentActivityEntity.CondensedStory story)
+        public string NpComm { get; private set; }
+
+        public TrophyEntry(Account account, TrophyDetailEntity.Trophy trophy, DateTime stamp, string game, string npcomm)
         {
             Account = account;
-            TimeStamp = story.Date.ToUniversalTime();
-            Event = story.Caption;
-            Source = story.Source.Meta;
-
-            var targets = story.Targets;            
-
-            var name = targets.FirstOrDefault(t => t.Type == "TROPHY_NAME");
-            var detail = targets.FirstOrDefault(t => t.Type == "TROPHY_DETAIL");
-            var url = targets.FirstOrDefault(t => t.Type == "TROPHY_IMAGE_URL");
-            var title = targets.FirstOrDefault(t => t.Type == "TITLE_NAME");
-
-            if (name != null)
+            Name = trophy.TrophyName;
+            TimeStamp = stamp;
+            Detail = trophy.TrophyDetail;
+            Image = trophy.TrophyIconUrl;
+            Title = game;
+            if (account != null)
             {
-                Name = name.Meta;
+                Source = account.PSNName;
             }
-
-            if (detail != null)
-            {
-                Detail = detail.Meta;
-            }
-
-            if (url != null)
-            {
-                Image = url.Meta;
-            }
-
-            if (title != null)
-            {
-                Title = title.Meta;
-            }
-        }
-
-        public TrophyEntry(Account account, RecentActivityEntity.Feed entry)
-        {
-            Account = account;
-            Account = account;
-            TimeStamp = entry.Date.ToUniversalTime();
-            Event = entry.Caption;
-            Source = entry.Source.Meta;
-            var targets = entry.Targets;
-
-            var name = targets.FirstOrDefault(t => t.Type == "TROPHY_NAME");
-            var detail = targets.FirstOrDefault(t => t.Type == "TROPHY_DETAIL");
-            var url = targets.FirstOrDefault(t => t.Type == "TROPHY_IMAGE_URL");
-            var title = targets.FirstOrDefault(t => t.Type == "TITLE_NAME");
-
-            if (name != null)
-            {
-                Name = name.Meta;
-            }
-
-            if (detail != null)
-            {
-                Detail = detail.Meta;
-            }
-
-            if (url != null)
-            {
-                Image = url.Meta;
-            }
-
-            if (title != null)
-            {
-                Title = title.Meta;
-            }
+            _trophy = trophy;
+            NpComm = npcomm;
         }
 
         public string GetTelegramMessage()
@@ -107,7 +54,7 @@ namespace PSNBot.Model
             }
             else
             {
-                var link = string.Format("http://psnbot.corvusalba.ru/trophy/{0}/{1}/{2}", WebUtility.UrlEncode(Name), WebUtility.UrlEncode(Detail), WebUtility.UrlEncode(Image));
+                var link = string.Format("http://psnbot.corvusalba.ru/trophy/{0}/{1}", WebUtility.UrlEncode(_trophy.TrophyId.ToString()), WebUtility.UrlEncode(NpComm));
                 return string.Format("{0} получил <a href=\"{1}\">трофей</a> в игре <b>{2}</b>", name, link, Title);
             }
         }

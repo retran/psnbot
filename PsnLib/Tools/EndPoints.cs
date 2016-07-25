@@ -89,10 +89,10 @@
             "https://activity.api.np.km.playstation.net/activity/api/v1/users/{0}/{1}/{2}?filters=PURCHASED&filters=RATED&filters=VIDEO_UPLOAD&filters=SCREENSHOT_UPLOAD&filters=PLAYED_GAME&filters=WATCHED_VIDEO&filters=TROPHY&filters=BROADCASTING&filters=LIKED&filters=PROFILE_PIC&filters=FRIENDED&filters=CONTENT_SHARE";
 
         public const string TrophyDetailList =
-            "https://{0}-tpy.np.community.playstation.net/trophy/v1/trophyTitles/{1}/trophyGroups/all/trophies?fields=@default,trophyRare,trophyEarnedRate&npLanguage={2}&iconSize=m&comparedUser={3}&fromUser={4}";
+            "https://{0}-tpy.np.community.playstation.net/trophy/v1/trophyTitles/{1}/trophyGroups/all/trophies?fields=@default,trophyRare,trophyEarnedRate&npLanguage={2}&iconSize=m&comparedUser={3}"; //&fromUser={4}";
 
         public const string TrophyList =
-            "https://{0}-tpy.np.community.playstation.net/trophy/v1/trophyTitles?fields=%40default&npLanguage={1}&iconSize=s&platform=PS3%2CPSVITA%2CPS4&offset={2}&limit=64&comparedUser={3}&fromUser={4}";
+            "https://{0}-tpy.np.community.playstation.net/trophy/v1/trophyTitles?fields=%40default&npLanguage={1}&iconSize=s&platform=PS3%2CPSVITA%2CPS4&offset={2}&limit=64&comparedUser={3}"; //&fromUser={4}";
 
         public const string User =
             "https://{0}-prof.np.community.playstation.net/userProfile/v1/users/{1}/profile?fields=@default,relation,onlineId,presence,avatarUrl,plus,personalDetail,trophySummary";
