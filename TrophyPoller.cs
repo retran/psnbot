@@ -47,12 +47,6 @@ namespace PSNBot
                         var trophies = await _psnService.GetTrophies(account, lastTimeStamp);                        
                         foreach (var ach in trophies)
                         {
-                            var acc = _accounts.GetByPSN(account.PSNName);
-                            if (acc == null)
-                            {
-                                continue;
-                            }
-
                             var msg = await _telegramClient.SendMessage(new Telegram.SendMessageQuery()
                             {
                                 ChatId = _chatId,
