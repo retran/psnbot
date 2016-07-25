@@ -39,12 +39,13 @@ namespace PSNBot
                 if ((dt - _lastCheckDateTime).TotalSeconds > 10)
                 {
                     DateTime lastTimeStamp = _timestampService.Get(".timestamp");
+                    _timestampService.Set(".timestamp", DateTime.Now.ToUniversalTime());
                     _lastCheckDateTime = dt;
                     var accounts = _accounts.GetAllWithShowTrophies();
                     foreach (var account in accounts)
                     {                                            
                         var trophies = await _psnService.GetTrophies(account, lastTimeStamp);                        
-                        foreach (var ach in trophies.Where(a => a.TimeStamp > lastTimeStamp).OrderBy(a => a.TimeStamp))
+                        foreach (var ach in trophies)
                         {
                             var acc = _accounts.GetByPSN(account.PSNName);
                             if (acc == null)
@@ -60,7 +61,7 @@ namespace PSNBot
                                 DisableWebPagePreview = false,
                                 DisableNotification = true
                             });
-                            
+
                             Thread.Sleep(1000);
                         }
 
@@ -70,7 +71,6 @@ namespace PSNBot
                             _accounts.Update(account);
                         }
                     }
-                    _timestampService.Set(".timestamp", DateTime.Now);
                 }
                 Thread.Sleep(1000);
             }
