@@ -1,9 +1,9 @@
-﻿using PSNBot.Services;
-using PSNBot.Telegram;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using PSNBot.Telegram;
+using PSNBot.Services;
 
 namespace PSNBot.Commands
 {
@@ -34,56 +34,53 @@ namespace PSNBot.Commands
 
         public override async Task<bool> Handle(Message message)
         {
-            StringBuilder sb = new StringBuilder();
-            var lines = await Task.WhenAll(_accounts.GetAll().AsParallel().Select(async account =>
+            var entries = await Task.WhenAll(_accounts.GetAll().AsParallel().Select(async a =>
             {
-                var builder = new StringBuilder();
-                builder.AppendLine(string.Format("Telegram: <b>{0}</b>\nPSN: <b>{1}</b>", account.TelegramName, account.PSNName));
-
-                var userEntry = await _psnService.GetUser(account.PSNName);
-
-                var status = userEntry.GetStatus();
-                if (!string.IsNullOrEmpty(status))
+                var user = await _psnService.GetUser(a.PSNName);
+                if (user == null)
                 {
-                    builder.AppendLine(string.Format("{0}", status));
+                    return null;
                 }
-
-                if (!string.IsNullOrEmpty(account.Interests))
+                return new
                 {
-                    builder.AppendLine(string.Format("{0}", account.Interests));
-                }
-                builder.AppendLine();
-                return builder.ToString();
+                    Id = a.Id,
+                    TelegramName = a.TelegramName,
+                    PSNName = a.PSNName,
+                    Rating = user.GetRating(),
+                    ThrophyLine = user.GetTrophyLine()
+                };
             }).ToArray());
 
-            foreach (var line in lines)
+            var table = entries.Where(t => t != null)
+                .OrderByDescending(t => t.Rating).ToList();
+
+            StringBuilder sb = new StringBuilder();
+            int i = 1;
+
+            if (table.Any())
             {
-                if (sb.Length + line.Length < 4096)
+                foreach (var t in table)
                 {
-                    sb.Append(line);
-                }
-                else
-                {
-                    await _telegramClient.SendMessage(new SendMessageQuery()
+                    if (t.Id == message.From.Id)
                     {
-                        ChatId = message.From.Id,
-                        Text = sb.ToString(),
-                        ParseMode = "HTML",
-                    });
-                    sb.Clear();
-                    sb.Append(line);
+                        sb.AppendLine(string.Format("<b>{0}. {1}</b>", i, !string.IsNullOrEmpty(t.TelegramName) ? t.TelegramName : t.PSNName));
+                    }
+                    else
+                    {
+                        sb.AppendLine(string.Format("{0}. {1}", i, !string.IsNullOrEmpty(t.TelegramName) ? t.TelegramName : t.PSNName));
+                    }
+                    i++;
                 }
+
+                var response = await _telegramClient.SendMessage(new SendMessageQuery()
+                {
+                    ChatId = message.Chat.Id,
+                    ReplyToMessageId = message.MessageId,
+                    Text = sb.ToString(),
+                    ParseMode = "HTML",
+                });
             }
-
-            await _telegramClient.SendMessage(new SendMessageQuery()
-            {
-                ChatId = message.From.Id,
-                Text = sb.ToString(),
-                ParseMode = "HTML",
-            });
-
             return true;
         }
     }
 }
-

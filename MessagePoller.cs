@@ -39,7 +39,7 @@ namespace PSNBot
             {
                 new TopCommand(_psnService, client, _accounts),
                 new SearchCommand(_psnService, client, _accounts),
-//                new ListCommand(_psnService, client, _accounts),
+                new ListCommand(_psnService, client, _accounts),
                 new StartCommand(_psnService, client, _accounts, _registrationProcess),
                 new HelpCommand(_psnService, client, _accounts),
                 new RulesCommand(_psnService, client, _accounts),
