@@ -27,7 +27,7 @@ namespace PSNBot.Services
             var timestamp = _databaseService.Select<TimeStamp>("Id", id).FirstOrDefault();
             if (timestamp != null)
             {
-                return timestamp.Stamp.ToUniversalTime();
+                return timestamp.Stamp;
             }
 
             return DateTime.UtcNow;

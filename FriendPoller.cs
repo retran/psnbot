@@ -71,7 +71,7 @@ namespace PSNBot
             }
             catch (Exception e)
             {
-                //Trace.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
+                Console.WriteLine(string.Format("{0}\t{1}", DateTime.Now, e.Message));
             }
         }
 

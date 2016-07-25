@@ -111,7 +111,7 @@ namespace PSNBot.Services
             if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
             {
                 DateTime? val = (DateTime?) property.GetValue(record);                
-                return new SqliteParameter(property.Name, val == null ? null : val.Value.ToString("o"));                
+                return new SqliteParameter(property.Name, val == null ? null : val.Value.ToUniversalTime().ToString("o"));                
             }
 
             return new SqliteParameter(property.Name, property.GetValue(record));
@@ -189,7 +189,7 @@ namespace PSNBot.Services
                     }
                     else
                     {
-                        prop.SetValue(record, DateTime.Parse(val));                        
+                        prop.SetValue(record, DateTime.Parse(val).ToUniversalTime());                        
                     }
                 }
                 i++;
