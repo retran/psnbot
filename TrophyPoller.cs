@@ -35,9 +35,11 @@ namespace PSNBot
         {
             try
             {               
+		Console.WriteLine("{0} Check Time", DateTime.Now);
                 var dt = DateTime.Now;
-                if ((dt - _lastCheckDateTime).TotalSeconds > 10)
+                if ((dt - _lastCheckDateTime).TotalSeconds > 30)
                 {
+		    Console.WriteLine("{0} Poll", DateTime.Now);
                     DateTime lastTimeStamp = _timestampService.Get(".timestamp");
                     _timestampService.Set(".timestamp", DateTime.Now.ToUniversalTime());
                     _lastCheckDateTime = dt;
@@ -55,7 +57,6 @@ namespace PSNBot
                                 DisableWebPagePreview = false,
                                 DisableNotification = true
                             });
-
                             Thread.Sleep(1000);
                         }
 
@@ -64,9 +65,11 @@ namespace PSNBot
                             account.LastPolledTrophy = trophies.Last().TimeStamp;
                             _accounts.Update(account);
                         }
+			Thread.Sleep(1000);
                     }
                 }
-                Thread.Sleep(1000);
+                Thread.Sleep(5000);
+		_lastCheckDateTime = dt;
             }
             catch (Exception e)
             {

@@ -53,8 +53,16 @@ namespace PSNBot.Services
                             results.Add(new TrophyEntry(account, detail, DateTime.Parse(detail.ComparedUser.EarnedDate).ToUniversalTime(), trophy.TrophyTitleName, trophy.NpCommunicationId));                           
                         }
                     }                        
+		    else
+		    {
+			Console.WriteLine("{0} Can't fetch details", DateTime.Now);	
+		    }
                 }                    
             }                
+	    else
+	    {
+		Console.WriteLine("{0} Can't fetch achievments", DateTime.Now);	
+	    }
             return results.OrderBy(r => r.TimeStamp);
         }
 
