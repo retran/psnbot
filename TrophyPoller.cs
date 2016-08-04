@@ -37,7 +37,7 @@ namespace PSNBot
             {               
 		Console.WriteLine("{0} Check Time", DateTime.Now);
                 var dt = DateTime.Now;
-                if ((dt - _lastCheckDateTime).TotalSeconds > 30)
+                if ((dt - _lastCheckDateTime).TotalSeconds > 90)
                 {
 		    Console.WriteLine("{0} Poll", DateTime.Now);
                     DateTime lastTimeStamp = _timestampService.Get(".timestamp");
@@ -67,9 +67,9 @@ namespace PSNBot
                         }
 			Thread.Sleep(1000);
                     }
+		    _lastCheckDateTime = dt;
                 }
                 Thread.Sleep(5000);
-		_lastCheckDateTime = dt;
             }
             catch (Exception e)
             {
