@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PSNBot.Services
@@ -41,10 +42,16 @@ namespace PSNBot.Services
         {
             var results = new List<TrophyEntry>();
             var trophies = await _trophyManager.GetTrophyList(account.PSNName, 0, _userAccountEntity);
+	    bool flag = false;
+	    while (!flag)
+	    {
             if (trophies != null && trophies.TrophyTitles != null && trophies.TrophyTitles.Any())
             {
                 foreach (var trophy in trophies.TrophyTitles.Where(tt => tt.ComparedUser != null && (DateTime.Parse(tt.ComparedUser.LastUpdateDate).ToUniversalTime() > lastUpdatedStamp)))
                 {
+		    bool f = false;
+			while (!f)
+			{
                     var details = await _trophyDetailManager.GetTrophyDetailList(trophy.NpCommunicationId, account.PSNName, true, _userAccountEntity);
                     if (details != null && details.Trophies != null && details.Trophies.Any())
                     {
@@ -52,16 +59,22 @@ namespace PSNBot.Services
                         {
                             results.Add(new TrophyEntry(account, detail, DateTime.Parse(detail.ComparedUser.EarnedDate).ToUniversalTime(), trophy.TrophyTitleName, trophy.NpCommunicationId));                           
                         }
+			f = true;
                     }                        
 		    else
 		    {
 			Console.WriteLine("{0} Can't fetch details", DateTime.Now);	
+			Thread.Sleep(1000);
 		    }
+			}
                 }                    
+		flag = true;
             }                
 	    else
 	    {
-		Console.WriteLine("{0} Can't fetch achievments", DateTime.Now);	
+		Console.WriteLine("{0} Can't fetch achievments for user {1}", DateTime.Now, account.PSNName);	
+		Thread.Sleep(1000);
+	    }
 	    }
             return results.OrderBy(r => r.TimeStamp);
         }
