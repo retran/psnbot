@@ -42,15 +42,15 @@ namespace PSNBot.Services
         {
             var results = new List<TrophyEntry>();
             var trophies = await _trophyManager.GetTrophyList(account.PSNName, 0, _userAccountEntity);
-	    bool flag = false;
-	    while (!flag)
+	    int flag = 0;
+	    while (flag < 10)
 	    {
             if (trophies != null && trophies.TrophyTitles != null && trophies.TrophyTitles.Any())
             {
                 foreach (var trophy in trophies.TrophyTitles.Where(tt => tt.ComparedUser != null && (DateTime.Parse(tt.ComparedUser.LastUpdateDate).ToUniversalTime() > lastUpdatedStamp)))
                 {
-		    bool f = false;
-			while (!f)
+		    int f = 0;
+			while (f < 10)
 			{
                     var details = await _trophyDetailManager.GetTrophyDetailList(trophy.NpCommunicationId, account.PSNName, true, _userAccountEntity);
                     if (details != null && details.Trophies != null && details.Trophies.Any())
@@ -59,21 +59,23 @@ namespace PSNBot.Services
                         {
                             results.Add(new TrophyEntry(account, detail, DateTime.Parse(detail.ComparedUser.EarnedDate).ToUniversalTime(), trophy.TrophyTitleName, trophy.NpCommunicationId));                           
                         }
-			f = true;
+			f = 10;
                     }                        
 		    else
 		    {
+                f++;
 			Console.WriteLine("{0} Can't fetch details", DateTime.Now);	
-			Thread.Sleep(1000);
+			Thread.Sleep(5000);
 		    }
 			}
                 }                    
-		flag = true;
+		flag = 10;
             }                
 	    else
 	    {
+            flag++;
 		Console.WriteLine("{0} Can't fetch achievments for user {1}", DateTime.Now, account.PSNName);	
-		Thread.Sleep(1000);
+		Thread.Sleep(5000);
 	    }
 	    }
             return results.OrderBy(r => r.TimeStamp);
