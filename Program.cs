@@ -27,6 +27,12 @@ namespace PSNBot
             var task = client.Login("retran@tolkien.ru", "");
             task.Wait();
 
+            if (!task.Result)
+            {
+                Console.WriteLine("Failed to login");
+                return;
+            }
+
             var telegramClient = new Telegram.TelegramClient("");
             var database = new DatabaseService("../../../psnbot.sqlite");
 
@@ -44,7 +50,7 @@ namespace PSNBot
             {
                 poller.Start();
                 imagePoller.Start();
-                trophyPoller.Start();
+                //trophyPoller.Start();
                 friendPoller.Start();
 
                 var host = new WebHostBuilder()
